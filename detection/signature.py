@@ -114,171 +114,244 @@ class SignatureDetector:
                             patterns[category].append(line_clean)
         return patterns
 
-    def analyze(self, telemetry_data: Dict[str, Any]) -> Dict[str, Any]:
+    def analyze(self, telemetry_data: Dict[str, Any], baseline_telemetry: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
-        Analyzes telemetry for Layer 1 rules with Response Verification Gates.
-        Filters out WAF/Proxy blocks (403, 429, 202 0-byte) and verifies response reflection/errors.
+        Analyzes HTTP telemetry for known attack patterns and enforces strict Proof Verifiers.
+        Enforces Hard Circuit-Breaker Gates (status 0, None, 403, 404, 429, 502, 503, 504).
+        Returns telemetry proof status, proof description, points, and vulnerability classification.
         """
         url = telemetry_data.get("url", "")
         payload = telemetry_data.get("payload", "") or ""
         resp_status = telemetry_data.get("status_code", 200)
         resp_size = telemetry_data.get("response_size", 0)
+        resp_time = telemetry_data.get("response_time", 0.0)
         resp_headers = telemetry_data.get("response_headers", {}) or {}
         resp_body = telemetry_data.get("response_body", "") or ""
 
         target_string = f"{url} {payload}"
         content_type = str(resp_headers.get("content-type", "") or resp_headers.get("Content-Type", "")).lower()
 
-        # Gate 1: WAF & Edge Block Filter
-        if resp_status in [403, 429] or (resp_status == 202 and resp_size == 0):
+        # Hard Response Gate 1: Network / Unreachable / Status 0 or None
+        if resp_status in [0, None]:
             return {
                 "matched": False,
-                "attack_type": "Request_Filtered_WAF",
-                "pattern_matched": f"HTTP {resp_status} WAF Block / Asynchronous 0-byte filter",
-                "confidence": "Low",
-                "points": 5,
+                "has_proof": False,
+                "is_vulnerable": False,
+                "attack_type": "Network_Error",
+                "pattern_matched": "HTTP Status 0 / Network Dropped",
+                "finding_status": "UNREACHABLE / NETWORK_DROPPED",
+                "confidence": "None",
+                "points": 0,
+                "proof_of_concept": "HTTP request failed or network connection dropped (Status 0/None)",
                 "missing_headers": []
             }
 
-        matched = False
-        attack_type = "None"
-        pattern_matched = ""
-        confidence = "Low"
-        points = 0
+        # Hard Response Gate 2: WAF Block / Edge Block / 404 Not Found
+        if resp_status in [403, 404, 429, 502, 503, 504] or (resp_status == 202 and resp_size == 0):
+            status_desc = "Resource Not Found" if resp_status == 404 else "WAF / Edge Block"
+            return {
+                "matched": False,
+                "has_proof": False,
+                "is_vulnerable": False,
+                "attack_type": "None",
+                "pattern_matched": f"HTTP {resp_status} {status_desc}",
+                "finding_status": "BLOCKED_OR_NOT_FOUND",
+                "confidence": "None",
+                "points": 0,
+                "proof_of_concept": f"HTTP {resp_status} {status_desc} - Request blocked or endpoint non-existent",
+                "missing_headers": []
+            }
 
-        # Check regex attack patterns
+        # Check payload syntax matches for injection candidate categories
         candidate_category = None
         candidate_rule = ""
-        for category, rules in self.REGEX_RULES.items():
+        for category in ["SQL_Injection", "XSS", "Command_Injection", "Auth_Weakness"]:
+            rules = self.REGEX_RULES.get(category, [])
             for rule in rules:
-                if re.search(rule, target_string):
+                if re.search(rule, payload) or (category == "SQL_Injection" and re.search(rule, target_string)):
                     candidate_category = category
                     candidate_rule = rule
                     break
             if candidate_category:
                 break
 
-        if not candidate_category:
-            category_mapping = {
-                "sqli": "SQL_Injection",
-                "xss": "XSS",
-                "cmd_injection": "Command_Injection",
-                "bola": "BOLA_IDOR",
-                "auth": "Auth_Weakness"
-            }
-            for raw_cat, pattern_list in self.custom_patterns.items():
-                for pat in pattern_list:
-                    if pat and pat in target_string:
-                        candidate_category = category_mapping.get(raw_cat.lower(), raw_cat.upper())
-                        candidate_rule = pat
-                        break
-                if candidate_category:
-                    break
+        has_proof = False
+        proof_of_concept = ""
+        matched = False
+        attack_type = "None"
+        pattern_matched = ""
+        finding_status = "Informational"
+        confidence = "Low"
+        points = 0
 
-        # Gate 2: Response Verification Criteria for Candidate Attack Payload Match
+        # Baseline Differential Comparison
+        baseline_time = baseline_telemetry.get("response_time", 0.0) if baseline_telemetry else 0.0
+        baseline_size = baseline_telemetry.get("response_size", 0) if baseline_telemetry else 0
+        baseline_status = baseline_telemetry.get("status_code", 200) if baseline_telemetry else 200
+
+        time_delta = max(0.0, resp_time - baseline_time)
+
+        # Strict Proof Verifiers Criteria (Section 3)
         if candidate_category:
-            matched = True
             attack_type = candidate_category
             pattern_matched = candidate_rule
 
             if candidate_category == "XSS":
-                # Verbatim unescaped Reflection check in HTML body
-                if payload and payload in resp_body and "text/html" in content_type and resp_size > 0:
+                # Verbatim unescaped Reflection check in text/html or application/xml
+                is_html_xml = any(ct in content_type for ct in ["text/html", "application/xml"])
+                if payload and payload in resp_body and is_html_xml and resp_size > 0 and resp_status == 200:
+                    matched = True
+                    has_proof = True
+                    finding_status = "Confirmed"
                     confidence = "High"
-                    points = 90
+                    points = 40
+                    proof_of_concept = f"Unescaped string reflection detected in {content_type} body"
                 else:
+                    matched = True
+                    has_proof = False
+                    finding_status = "Suspected"
                     confidence = "Low"
-                    points = 15  # Unverified payload syntax match
+                    points = 10
+                    proof_of_concept = "Payload syntax matched but missing verbatim HTML/XML unescaped reflection"
 
             elif candidate_category == "SQL_Injection":
-                # Error-based SQL trace verification in response body
-                sql_error_found = any(re.search(err, resp_body) for err in self.SQL_ERROR_PATTERNS)
-                if sql_error_found:
+                # Error-based SQL trace verification OR Time-based SQLi (time_delta > 3.0s)
+                matched_sql_err = next((err for err in self.SQL_ERROR_PATTERNS if re.search(err, resp_body)), None)
+                if matched_sql_err:
+                    matched = True
+                    has_proof = True
+                    finding_status = "Confirmed"
                     confidence = "High"
-                    points = 90
+                    points = 40
+                    proof_of_concept = f"SQL Error signature matched: {matched_sql_err}"
+                elif time_delta > 3.0:
+                    matched = True
+                    has_proof = True
+                    finding_status = "Confirmed"
+                    confidence = "High"
+                    points = 40
+                    proof_of_concept = f"Time-based SQLi response delay detected: {time_delta:.2f}s > 3.00s"
                 else:
+                    matched = True
+                    has_proof = False
+                    finding_status = "Suspected"
                     confidence = "Low"
-                    points = 20  # Unverified SQL parameter match
+                    points = 10
+                    proof_of_concept = "SQL parameter payload syntax matched without database error or execution time delay"
 
             elif candidate_category == "Command_Injection":
-                cmd_out_found = any(re.search(cmd_pat, resp_body) for cmd_pat in self.CMD_OUTPUT_PATTERNS)
-                if cmd_out_found:
+                # Shell output signature OR Time-based delay > 3.0s
+                matched_cmd_sig = next((cmd_pat for cmd_pat in self.CMD_OUTPUT_PATTERNS if re.search(cmd_pat, resp_body)), None)
+                if matched_cmd_sig:
+                    matched = True
+                    has_proof = True
+                    finding_status = "Confirmed"
                     confidence = "High"
-                    points = 90
-                else:
-                    confidence = "Low"
-                    points = 20
-
-            elif candidate_category == "BOLA_IDOR":
-                # Real BOLA Verification Gate:
-                # High confidence if HTTP 200/201 returns sensitive user account properties
-                # or if object ID access succeeds without active authorization header
-                auth_header = telemetry_data.get("request_headers", {}).get("Authorization", "")
-                has_sensitive_data = any(re.search(pat, resp_body, re.I) for pat in [r"\"email\":", r"\"ssn\":", r"\"password\":", r"\"role\":"])
-                
-                if resp_status in [200, 201] and (has_sensitive_data or not auth_header):
+                    points = 40
+                    proof_of_concept = f"Command execution signature matched: {matched_cmd_sig}"
+                elif time_delta > 3.0:
+                    matched = True
+                    has_proof = True
+                    finding_status = "Confirmed"
                     confidence = "High"
-                    points = 90
-                elif resp_status in [200, 201]:
-                    confidence = "Medium"
-                    points = 50
+                    points = 40
+                    proof_of_concept = f"Time-based Command Injection delay detected: {time_delta:.2f}s > 3.00s"
                 else:
+                    matched = True
+                    has_proof = False
+                    finding_status = "Suspected"
                     confidence = "Low"
-                    points = 15
+                    points = 10
+                    proof_of_concept = "Command payload syntax matched without shell output or execution delay"
 
             elif candidate_category == "Auth_Weakness":
-                # Real JWT / Auth Verification Gate:
-                # High confidence if unauthenticated/null/alg=none token accesses endpoint with HTTP 200
                 is_jwt_alg_none = bool(re.search(r"(?i)alg\s*:\s*\"?none\"?", target_string))
-                if resp_status in [200, 201] or is_jwt_alg_none:
+                if (resp_status in [200, 201] and payload) or is_jwt_alg_none:
+                    matched = True
+                    has_proof = True
+                    finding_status = "Confirmed"
                     confidence = "High"
-                    points = 90
+                    points = 40
+                    proof_of_concept = "Auth parameter / JWT 'alg: none' accepted by server"
                 else:
+                    matched = True
+                    has_proof = False
+                    finding_status = "Suspected"
                     confidence = "Low"
-                    points = 20
+                    points = 10
+                    proof_of_concept = "Unverified auth parameter payload"
 
-        # Check for verbose stack traces in response body if not matched
-        if not matched:
+        # BOLA / IDOR Proof Verification
+        if not matched and resp_status in [200, 201]:
+            has_bola_pattern = any(re.search(r, target_string) for r in self.REGEX_RULES["BOLA_IDOR"])
+            auth_header = telemetry_data.get("request_headers", {}).get("Authorization", "")
+            has_sensitive_data = any(re.search(pat, resp_body, re.I) for pat in [r"\"email\":", r"\"ssn\":", r"\"password\":", r"\"role\":", r"\"token\":"])
+
+            if has_bola_pattern and (has_sensitive_data or not auth_header):
+                matched = True
+                has_proof = True
+                attack_type = "BOLA_IDOR"
+                pattern_matched = "Object ID access returned sensitive user data or succeeded without authorization"
+                finding_status = "Confirmed"
+                confidence = "High"
+                points = 40
+                proof_of_concept = "Unauthorized object access returned sensitive object properties in 200 OK body"
+
+        # Verbose Stack Traces Verification
+        if not matched and resp_status not in [404, 401, 403, 429, 502, 503, 504]:
             for err_pat in self.VERBOSE_ERROR_PATTERNS:
                 if re.search(err_pat, resp_body):
                     matched = True
+                    has_proof = True
                     attack_type = "Verbose_Error_Exposure"
                     pattern_matched = err_pat
+                    finding_status = "Confirmed"
                     confidence = "Medium"
-                    points = 65
+                    points = 25
+                    proof_of_concept = f"Verbose stack trace trace exposed in response: {err_pat}"
                     break
 
-        # Check for sensitive data exposure
-        if not matched:
+        # Sensitive Data Exposure Verification
+        if not matched and resp_status not in [404, 401, 403, 429, 502, 503, 504]:
             for sens_pat in self.SENSITIVE_DATA_PATTERNS:
                 if re.search(sens_pat, resp_body):
                     matched = True
+                    has_proof = True
                     attack_type = "Sensitive_Data_Exposure"
                     pattern_matched = sens_pat
+                    finding_status = "Confirmed"
                     confidence = "High"
-                    points = 85
+                    points = 35
+                    proof_of_concept = f"Sensitive credentials exposed in response: {sens_pat}"
                     break
 
-        # Check missing security headers
+        # Missing Security Headers Check
         missing_headers = []
         resp_headers_lower = {k.lower(): v for k, v in resp_headers.items()}
         for req_h in self.REQUIRED_SECURITY_HEADERS:
             if req_h.lower() not in resp_headers_lower:
                 missing_headers.append(req_h)
 
-        if not matched and missing_headers:
+        if not matched and missing_headers and resp_status not in [404, 401, 403, 406, 429, 502, 503, 504]:
             matched = True
+            has_proof = False  # Header misconfigurations do not constitute injection exploit proof
             attack_type = "Security_Misconfiguration"
             pattern_matched = f"Missing headers: {', '.join(missing_headers)}"
+            finding_status = "Informational"
             confidence = "Low"
-            points = 25
+            points = 10
+            proof_of_concept = f"Missing security headers: {', '.join(missing_headers)}"
 
         return {
             "matched": matched,
+            "has_proof": has_proof,
+            "is_vulnerable": has_proof and points > 0,
             "attack_type": attack_type,
             "pattern_matched": pattern_matched,
+            "finding_status": finding_status,
             "confidence": confidence,
-            "points": min(points, 90),
+            "points": min(points, 40),
+            "proof_of_concept": proof_of_concept or ("No vulnerability proof criteria met" if not has_proof else "Vulnerability proof verified"),
             "missing_headers": missing_headers
         }
 

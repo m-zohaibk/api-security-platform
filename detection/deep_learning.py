@@ -108,7 +108,7 @@ class DeepLearningDetector:
             with torch.no_grad():
                 lstm_prob = float(self.lstm_model(inp_tensor).item())
 
-        lstm_points = round(lstm_prob * 30.0, 2)
+        lstm_points = min(round(lstm_prob * 15.0, 2), 15.0)
 
         # 2. Autoencoder Inference
         ae_error = 0.0
@@ -135,15 +135,15 @@ class DeepLearningDetector:
             else:
                 ae_score_norm = float(np.clip(ae_error, 0.0, 1.0))
 
-        ae_points = round(ae_score_norm * 20.0, 2)
+        ae_points = min(round(ae_score_norm * 20.0, 2), 20.0)
 
         return {
             "lstm_probability": round(lstm_prob, 4),
-            "lstm_points": min(lstm_points, 30.0),
+            "lstm_points": lstm_points,
             "autoencoder_error": round(ae_error, 4),
             "autoencoder_threshold": self.ae_threshold,
-            "autoencoder_points": min(ae_points, 20.0),
-            "total_layer3_points": min(lstm_points + ae_points, 50.0)
+            "autoencoder_points": ae_points,
+            "total_layer3_points": round(lstm_points + ae_points, 2)
         }
 
 

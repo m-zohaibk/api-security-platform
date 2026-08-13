@@ -4,15 +4,51 @@ from detection.risk_scorer import RiskScorer
 def test_risk_scorer_calculations():
     scorer = RiskScorer()
     
-    mock_sig = {"matched": True, "attack_type": "SQL_Injection", "points": 90}
-    mock_ml = {"is_anomaly": True, "anomaly_score": 0.5, "points": 20.0}
-    mock_dl = {"lstm_probability": 0.5, "lstm_points": 15.0, "autoencoder_points": 10.0}
+    mock_sig = {"matched": True, "has_proof": True, "attack_type": "SQL_Injection", "points": 40.0, "finding_status": "Confirmed"}
+    mock_ml = {"is_anomaly": True, "anomaly_score": 0.5, "points": 12.5}
+    mock_dl = {"lstm_probability": 0.5, "lstm_points": 7.5, "autoencoder_points": 10.0}
 
     res = scorer.calculate_risk(mock_sig, mock_ml, mock_dl, "http://localhost/api", "GET")
     
-    assert res["total_score"] > 0
-    assert res["severity"] in ["Low", "Medium", "High", "Critical"]
+    assert res["total_score"] == 70.0  # 40 + 12.5 + 7.5 + 10 = 70.0
+    assert res["severity"] == "HIGH"
+    assert res["finding_status"] == "Confirmed"
     assert "recommendation" in res
-    assert res["points_breakdown"]["raw_total_points"] == 135.0
-    assert res["total_score"] == 75.0 # (135 / 180) * 100
-    assert res["severity"] == "High"
+
+def test_risk_scorer_layer_caps_and_boundaries():
+    scorer = RiskScorer()
+
+    # Enforce layer caps (Sig=40, ML=25, LSTM=15, AE=20, Total=100)
+    mock_sig_over = {"matched": True, "has_proof": True, "points": 90.0, "finding_status": "Confirmed"}
+    mock_ml_over = {"is_anomaly": True, "points": 50.0}
+    mock_dl_over = {"lstm_points": 30.0, "autoencoder_points": 40.0}
+
+    res_cap = scorer.calculate_risk(mock_sig_over, mock_ml_over, mock_dl_over)
+    assert res_cap["points_breakdown"]["signature_points"] == 40.0
+    assert res_cap["points_breakdown"]["ml_points"] == 25.0
+    assert res_cap["points_breakdown"]["lstm_points"] == 15.0
+    assert res_cap["points_breakdown"]["autoencoder_points"] == 20.0
+    assert res_cap["total_score"] == 100.0
+    assert res_cap["severity"] == "CRITICAL"
+
+    # Exact severity boundaries: 0=NONE, 29=LOW, 30=MEDIUM, 59=MEDIUM, 60=HIGH, 84=HIGH, 85=CRITICAL
+    assert RiskScorer.classify_severity(0.0) == "NONE"
+    assert RiskScorer.classify_severity(29.0) == "LOW"
+    assert RiskScorer.classify_severity(30.0) == "MEDIUM"
+    assert RiskScorer.classify_severity(59.0) == "MEDIUM"
+    assert RiskScorer.classify_severity(60.0) == "HIGH"
+    assert RiskScorer.classify_severity(84.0) == "HIGH"
+    assert RiskScorer.classify_severity(85.0) == "CRITICAL"
+
+def test_proof_multiplier_zero_when_no_proof():
+    scorer = RiskScorer()
+    mock_sig = {"matched": True, "has_proof": False, "attack_type": "SQL_Injection", "points": 40.0}
+    mock_ml = {"is_anomaly": True, "points": 12.5}
+    mock_dl = {"lstm_points": 7.5, "autoencoder_points": 10.0}
+
+    # Total raw score = 70, but has_proof = False -> Proof_Multiplier = 0.0 -> Score = 0.0
+    res = scorer.calculate_risk(mock_sig, mock_ml, mock_dl, "http://localhost/api", "GET")
+    assert res["total_score"] == 0.0
+    assert res["severity"] == "NONE"
+    assert res["is_vulnerable"] is False
+

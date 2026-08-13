@@ -49,7 +49,14 @@ class RequestEngine:
             if json_payload:
                 json_data = json_payload
             elif payload_str:
-                data = payload_str
+                import json
+                try:
+                    json_data = json.loads(payload_str)
+                except (json.JSONDecodeError, TypeError):
+                    if req_headers.get("Content-Type") == "application/json":
+                        json_data = {"data": payload_str}
+                    else:
+                        data = payload_str
 
         start_time = time.time()
         
@@ -143,7 +150,14 @@ class RequestEngine:
             if json_payload:
                 json_data = json_payload
             elif payload_str:
-                data = payload_str
+                import json
+                try:
+                    json_data = json.loads(payload_str)
+                except (json.JSONDecodeError, TypeError):
+                    if req_headers.get("Content-Type") == "application/json":
+                        json_data = {"data": payload_str}
+                    else:
+                        data = payload_str
 
         start_time = time.time()
 

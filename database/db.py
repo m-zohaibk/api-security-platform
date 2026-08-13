@@ -23,8 +23,20 @@ engine = create_engine(
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def init_db():
-    """Creates all database tables on initial startup."""
+    """Creates all database tables on initial startup and applies migrations."""
     Base.metadata.create_all(bind=engine)
+    # Ensure finding_status column exists for existing SQLite database
+    with engine.connect() as conn:
+        try:
+            from sqlalchemy import text
+            result = conn.execute(text("PRAGMA table_info(findings)"))
+            columns = [row[1] for row in result.fetchall()]
+            if columns and "finding_status" not in columns:
+                conn.execute(text("ALTER TABLE findings ADD COLUMN finding_status VARCHAR(30) DEFAULT 'Informational' NOT NULL"))
+                conn.commit()
+                logger.info("Migrated findings table: added finding_status column.")
+        except Exception as exc:
+            logger.warning(f"Database migration check: {exc}")
     logger.info("Database tables initialized successfully.")
 
 def get_db():
@@ -81,6 +93,7 @@ def save_finding(
     attack_type: str,
     severity: str,
     risk_score: float,
+    finding_status: str = "Informational",
     signature_triggered: str = "",
     ml_score: float = 0.0,
     lstm_score: float = 0.0,
@@ -97,6 +110,7 @@ def save_finding(
             session_id=session_id,
             endpoint_id=endpoint_id,
             attack_type=attack_type,
+            finding_status=finding_status,
             severity=severity,
             risk_score=risk_score,
             signature_triggered=signature_triggered,

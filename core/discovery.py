@@ -27,8 +27,10 @@ class EndpointDiscovery:
         "/users/v1",
         "/users/v1/login",
         "/users/v1/register",
+        "/users/v1/_debug",
         "/users/v1/debug",
         "/users/v1/1",
+        "/users/v1/2",
         "/auth",
         "/login",
         "/createdb"
@@ -132,6 +134,11 @@ class EndpointDiscovery:
                         resp = client.get(target_url)
                         if resp.status_code < 404:
                             self.discovered_endpoints.append({"url": target_url, "method": "GET"})
+                        elif relative_path in ["/users/v1/login", "/users/v1/register", "/login"]:
+                            # Test POST for known form/auth endpoints if GET returns 404/405
+                            post_resp = client.post(target_url, json={})
+                            if post_resp.status_code < 404 or post_resp.status_code in [400, 422]:
+                                self.discovered_endpoints.append({"url": target_url, "method": "POST"})
                     except httpx.RequestError:
                         continue
 

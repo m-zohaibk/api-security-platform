@@ -79,12 +79,12 @@ class MLAnomalyDetector:
             normalized_score = float(np.clip(raw_anomaly_score, 0.0, 1.0))
             
             is_anomaly = bool(normalized_score > 0.5)
-            points = round(normalized_score * 40.0, 2)
+            points = round(normalized_score * 25.0, 2)
 
             return {
                 "is_anomaly": is_anomaly,
                 "anomaly_score": round(normalized_score, 4),
-                "points": min(points, 40.0),
+                "points": min(points, 25.0),
                 "note": "Model prediction complete"
             }
         except Exception as exc:

@@ -48,68 +48,98 @@ def run_pipeline(target_url: str):
     total_scores = []
 
     try:
+        active_test_queue = [
+            {"type": "SQL_Injection", "payload": "{\"username\": \"admin' OR 1=1 --\", \"password\": \"pass\"}", "method": "POST", "headers": {"Content-Type": "application/json"}},
+            {"type": "Cross_Site_Scripting", "payload": "<script>alert('xss')</script>", "method": "POST"},
+            {"type": "Command_Injection", "payload": "; cat /etc/passwd", "method": "GET"},
+            {"type": "Broken_Authentication", "payload": "Bearer null", "method": "GET", "headers": {"Authorization": "Bearer null"}},
+            {"type": "BOLA_IDOR", "payload": "id=1", "method": "GET", "path_suffix": "/1"},
+            {"type": "Baseline_Inspection", "payload": "", "method": "GET"}
+        ]
+
         for idx, ep_info in enumerate(discovered_endpoints, start=1):
-            url = ep_info["url"]
-            method = ep_info["method"]
+            base_ep_url = ep_info["url"]
+            default_method = ep_info["method"]
 
-            print(f"\n[{idx}/{len(discovered_endpoints)}] Testing Endpoint: [{method}] {url}")
+            print(f"\n[{idx}/{len(discovered_endpoints)}] Testing Endpoint: [{default_method}] {base_ep_url}")
 
-            # Send Request Telemetry
-            req_data = request_engine.send_request(method, url)
-            features = response_parser.extract_features(req_data)
-            payload_str = req_data.get("payload", "") or ""
+            # Baseline request
+            baseline_req = request_engine.send_request(default_method, base_ep_url)
+            baseline_telemetry = {
+                "status_code": baseline_req.get("status_code", 200),
+                "response_size": baseline_req.get("response_size", 0),
+                "response_time": baseline_req.get("response_time", 0.0)
+            }
 
-            # Layer 1 - Signature Detection
-            sig_res = signature_detector.analyze(req_data)
+            for test_item in active_test_queue:
+                path_suffix = test_item.get("path_suffix", "")
+                if path_suffix:
+                    if base_ep_url.rstrip("/").endswith(path_suffix.strip("/")):
+                        test_url = base_ep_url
+                    else:
+                        test_url = base_ep_url.rstrip("/") + path_suffix
+                else:
+                    test_url = base_ep_url
 
-            # Layer 2 - ML Anomaly Detection (Isolation Forest)
-            ml_res = ml_detector.predict(features)
+                test_method = test_item.get("method", default_method)
+                payload_str = test_item.get("payload", "")
+                custom_headers = test_item.get("headers", None)
 
-            # Layer 3 - Deep Learning (PyTorch LSTM + Autoencoder)
-            dl_res = dl_detector.analyze(payload_str, features)
+                # Send Request Telemetry
+                req_data = request_engine.send_request(test_method, test_url, payload=payload_str, custom_headers=custom_headers)
+                features = response_parser.extract_features(req_data)
 
-            # Risk Scoring Calculation
-            risk_summary = risk_scorer.calculate_risk(
-                signature_result=sig_res,
-                ml_result=ml_res,
-                dl_result=dl_res,
-                endpoint_url=url,
-                http_method=method
-            )
+                # Layer 1 - Signature Detection & Proof Verification
+                sig_res = signature_detector.analyze(req_data, baseline_telemetry=baseline_telemetry)
 
-            score = risk_summary["total_score"]
-            severity = risk_summary["severity"]
-            total_scores.append(score)
+                # Layer 2 - ML Anomaly Detection (Isolation Forest)
+                ml_res = ml_detector.predict(features)
 
-            # Print Console Breakdown
-            print(f"  - Layer 1 (Signature)   : {sig_res['points']} pts [{sig_res['attack_type']}]")
-            print(f"  - Layer 2 (ML Anomaly)  : {ml_res['points']} pts [Score: {ml_res['anomaly_score']}]")
-            print(f"  - Layer 3 (Deep Learning): {dl_res['total_layer3_points']} pts (LSTM: {dl_res['lstm_points']}, AE: {dl_res['autoencoder_points']})")
-            print(f"  - TOTAL RISK SCORE      : {score}/100 [{severity}]")
+                # Layer 3 - Deep Learning (PyTorch LSTM + Autoencoder)
+                dl_res = dl_detector.analyze(payload_str, features)
 
-            # Persist Result to SQLite Database
-            ep_obj = save_endpoint(session_id=session_obj.id, url=url, method=method)
+                # Risk Scoring Calculation
+                risk_summary = risk_scorer.calculate_risk(
+                    signature_result=sig_res,
+                    ml_result=ml_res,
+                    dl_result=dl_res,
+                    endpoint_url=test_url,
+                    http_method=test_method,
+                    payload_had_effect=req_data.get("payload_had_effect", True),
+                    telemetry_data=req_data
+                )
 
-            attack_name = sig_res.get("attack_type", "Security_Misconfiguration") if sig_res.get("matched") or score >= 30.0 else "None"
-            if sig_res.get("matched") or score >= 30.0:
-                vulnerability_count += 1
+                score = risk_summary["total_score"]
+                severity = risk_summary["severity"]
+                total_scores.append(score)
 
-            save_finding(
-                session_id=session_obj.id,
-                endpoint_id=ep_obj.id,
-                attack_type=attack_name,
-                severity=severity,
-                risk_score=score,
-                signature_triggered=sig_res.get("pattern_matched", ""),
-                ml_score=ml_res.get("points", 0.0),
-                lstm_score=dl_res.get("lstm_points", 0.0),
-                autoencoder_score=dl_res.get("autoencoder_points", 0.0),
-                recommendation=risk_summary.get("recommendation", ""),
-                request_payload=payload_str,
-                response_status=req_data.get("status_code", 200),
-                response_size=req_data.get("response_size", 0),
-                response_time=req_data.get("response_time", 0.0)
-            )
+                # Print Console Breakdown
+                print(f"  [{test_item['type']}] -> Layer 1: {sig_res['points']} pts | ML: {ml_res['points']} pts | DL: {dl_res['total_layer3_points']} pts | SCORE: {score} [{severity}]")
+
+                # Persist Result to SQLite Database
+                ep_obj = save_endpoint(session_id=session_obj.id, url=test_url, method=test_method)
+
+                attack_name = sig_res.get("attack_type", "None") if sig_res.get("is_vulnerable") or score > 0.0 else "None"
+                if sig_res.get("is_vulnerable") or score > 0.0:
+                    vulnerability_count += 1
+
+                save_finding(
+                    session_id=session_obj.id,
+                    endpoint_id=ep_obj.id,
+                    attack_type=attack_name,
+                    severity=severity,
+                    risk_score=score,
+                    finding_status=risk_summary.get("finding_status", "Informational"),
+                    signature_triggered=sig_res.get("proof_of_concept") or sig_res.get("pattern_matched", ""),
+                    ml_score=ml_res.get("points", 0.0),
+                    lstm_score=dl_res.get("lstm_points", 0.0),
+                    autoencoder_score=dl_res.get("autoencoder_points", 0.0),
+                    recommendation=risk_summary.get("recommendation", ""),
+                    request_payload=payload_str,
+                    response_status=req_data.get("status_code", 200),
+                    response_size=req_data.get("response_size", 0),
+                    response_time=req_data.get("response_time", 0.0)
+                )
 
         avg_score = round(sum(total_scores) / len(total_scores), 2) if total_scores else 0.0
         complete_scan_session(

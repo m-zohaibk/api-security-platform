@@ -61,7 +61,7 @@ def start_scan():
     active_test_queue = []
     
     if module_sqli:
-        active_test_queue.append({"type": "SQL_Injection", "payload": "' OR 1=1 --", "method": "POST"})
+        active_test_queue.append({"type": "SQL_Injection", "payload": "{\"username\": \"admin' OR 1=1 --\", \"password\": \"pass\"}", "method": "POST", "headers": {"Content-Type": "application/json"}})
     if module_xss:
         active_test_queue.append({"type": "Cross_Site_Scripting", "payload": "<script>alert('xss')</script>", "method": "POST"})
     if module_cmd:
@@ -69,7 +69,7 @@ def start_scan():
     if module_auth:
         active_test_queue.append({"type": "Broken_Authentication", "payload": "Bearer null", "method": "GET", "headers": {"Authorization": "Bearer null"}})
     if module_bola:
-        active_test_queue.append({"type": "BOLA_IDOR", "payload": "id=1", "method": "GET", "path_suffix": "/users/1"})
+        active_test_queue.append({"type": "BOLA_IDOR", "payload": "id=1", "method": "GET", "path_suffix": "/1"})
 
     # Fallback to standard baseline if no module selected
     if not active_test_queue:
@@ -81,18 +81,51 @@ def start_scan():
 
         ep_obj = save_endpoint(session_id=session_obj.id, url=base_ep_url, method=default_method)
 
+        # Baseline request — get normal response parameters
+        baseline_req = request_engine.send_request(default_method, base_ep_url)
+        baseline_size = baseline_req.get("response_size", 0)
+        baseline_status = baseline_req.get("status_code", 200)
+        baseline_time = baseline_req.get("response_time", 0.0)
+        baseline_telemetry = {
+            "status_code": baseline_status,
+            "response_size": baseline_size,
+            "response_time": baseline_time
+        }
+
         for test_item in active_test_queue:
-            test_url = base_ep_url + test_item.get("path_suffix", "")
+            # Handle path suffix safely for BOLA testing
+            path_suffix = test_item.get("path_suffix", "")
+            if path_suffix:
+                if base_ep_url.rstrip("/").endswith(path_suffix.strip("/")):
+                    test_url = base_ep_url
+                else:
+                    test_url = base_ep_url.rstrip("/") + path_suffix
+            else:
+                test_url = base_ep_url
+
             test_method = test_item.get("method", default_method)
             payload_str = test_item.get("payload", "")
             custom_headers = test_item.get("headers", None)
 
             # Dispatch HTTP Request with payload
             req_data = request_engine.send_request(test_method, test_url, payload=payload_str, custom_headers=custom_headers)
+
+            # Skip if response is identical to baseline
+            current_size = req_data.get("response_size", 0)
+            current_status = req_data.get("status_code", 200)
+
+            if (current_size == baseline_size 
+                and current_status == baseline_status
+                and current_size > 0
+                and test_item["type"] not in ["Baseline_Inspection"]):
+                req_data["payload_had_effect"] = False
+            else:
+                req_data["payload_had_effect"] = True
+
             features = response_parser.extract_features(req_data)
 
             # Detection Layers
-            sig_res = signature_detector.analyze(req_data)
+            sig_res = signature_detector.analyze(req_data, baseline_telemetry=baseline_telemetry)
             ml_res = ml_detector.predict(features)
             dl_res = dl_detector.analyze(payload_str, features)
 
@@ -101,16 +134,18 @@ def start_scan():
                 ml_result=ml_res,
                 dl_result=dl_res,
                 endpoint_url=test_url,
-                http_method=test_method
+                http_method=test_method,
+                payload_had_effect=req_data.get("payload_had_effect", True),
+                telemetry_data=req_data
             )
 
             score = risk_summary["total_score"]
             severity = risk_summary["severity"]
             total_risk_scores.append(score)
 
-            attack_name = test_item["type"] if sig_res.get("matched") or score >= 30.0 else sig_res.get("attack_type", "Security_Misconfiguration")
+            attack_name = test_item["type"] if sig_res.get("is_vulnerable") or score > 0.0 else sig_res.get("attack_type", "None")
 
-            if sig_res.get("matched") or score >= 30.0:
+            if sig_res.get("is_vulnerable") or score > 0.0:
                 vulnerability_count += 1
 
             save_finding(
@@ -119,7 +154,8 @@ def start_scan():
                 attack_type=attack_name,
                 severity=severity,
                 risk_score=score,
-                signature_triggered=sig_res.get("pattern_matched", ""),
+                finding_status=risk_summary.get("finding_status", "Informational"),
+                signature_triggered=sig_res.get("proof_of_concept") or sig_res.get("pattern_matched", ""),
                 ml_score=ml_res.get("points", 0.0),
                 lstm_score=dl_res.get("lstm_points", 0.0),
                 autoencoder_score=dl_res.get("autoencoder_points", 0.0),

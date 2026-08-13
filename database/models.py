@@ -43,6 +43,7 @@ class Finding(Base):
     endpoint_id = Column(Integer, ForeignKey("endpoints.id", ondelete="CASCADE"), nullable=True)
     
     attack_type = Column(String(100), nullable=False, default="None")
+    finding_status = Column(String(30), nullable=False, default="Informational")
     severity = Column(String(20), nullable=False, default="Low")
     risk_score = Column(Float, default=0.0)
     signature_triggered = Column(String(255), default="")
