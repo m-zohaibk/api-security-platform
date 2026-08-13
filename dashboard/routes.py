@@ -31,12 +31,20 @@ def start_scan():
     if not target_url:
         return redirect(url_for("dashboard.index"))
 
-    # Selected Inspection Modules
-    module_sqli = request.form.get("module_sqli") == "on"
-    module_xss = request.form.get("module_xss") == "on"
-    module_bola = request.form.get("module_bola") == "on"
-    module_auth = request.form.get("module_auth") == "on"
-    module_cmd = request.form.get("module_cmd") == "on"
+    # Selected Inspection Modules — default all to True if not explicitly parameterized
+    has_explicit_modules = any(k.startswith("module_") for k in request.form.keys())
+    if has_explicit_modules:
+        module_sqli = request.form.get("module_sqli") == "on"
+        module_xss = request.form.get("module_xss") == "on"
+        module_bola = request.form.get("module_bola") == "on"
+        module_auth = request.form.get("module_auth") == "on"
+        module_cmd = request.form.get("module_cmd") == "on"
+    else:
+        module_sqli = True
+        module_xss = True
+        module_bola = True
+        module_auth = True
+        module_cmd = True
 
     # Active Scan Engine Pipeline Execution
     discoverer = EndpointDiscovery(base_url=target_url)
@@ -62,14 +70,15 @@ def start_scan():
     
     if module_sqli:
         active_test_queue.append({"type": "SQL_Injection", "payload": "{\"username\": \"admin' OR 1=1 --\", \"password\": \"pass\"}", "method": "POST", "headers": {"Content-Type": "application/json"}})
+        active_test_queue.append({"type": "SQL_Injection_GET", "payload": "' OR 1=1 --", "method": "GET"})
     if module_xss:
         active_test_queue.append({"type": "Cross_Site_Scripting", "payload": "<script>alert('xss')</script>", "method": "POST"})
     if module_cmd:
         active_test_queue.append({"type": "Command_Injection", "payload": "; cat /etc/passwd", "method": "GET"})
     if module_auth:
-        active_test_queue.append({"type": "Broken_Authentication", "payload": "Bearer null", "method": "GET", "headers": {"Authorization": "Bearer null"}})
+        active_test_queue.append({"type": "Broken_Authentication", "payload": "", "method": "GET", "headers": {"Authorization": "Bearer null"}})
     if module_bola:
-        active_test_queue.append({"type": "BOLA_IDOR", "payload": "id=1", "method": "GET", "path_suffix": "/1"})
+        active_test_queue.append({"type": "BOLA_IDOR", "payload": "", "method": "GET", "path_suffix": "/1"})
 
     # Fallback to standard baseline if no module selected
     if not active_test_queue:
@@ -167,11 +176,11 @@ def start_scan():
             )
 
     # Update session overall totals and end time
-    avg_score = round(sum(total_risk_scores) / len(total_risk_scores), 2) if total_risk_scores else 0.0
+    overall_score = round(max(total_risk_scores), 2) if total_risk_scores else 0.0
     complete_scan_session(
         session_id=session_obj.id,
-        overall_risk_score=avg_score,
-        overall_severity=RiskScorer.classify_severity(avg_score),
+        overall_risk_score=overall_score,
+        overall_severity=RiskScorer.classify_severity(overall_score),
         total_vulnerabilities=vulnerability_count
     )
 

@@ -50,10 +50,11 @@ def run_pipeline(target_url: str):
     try:
         active_test_queue = [
             {"type": "SQL_Injection", "payload": "{\"username\": \"admin' OR 1=1 --\", \"password\": \"pass\"}", "method": "POST", "headers": {"Content-Type": "application/json"}},
+            {"type": "SQL_Injection_GET", "payload": "' OR 1=1 --", "method": "GET"},
             {"type": "Cross_Site_Scripting", "payload": "<script>alert('xss')</script>", "method": "POST"},
             {"type": "Command_Injection", "payload": "; cat /etc/passwd", "method": "GET"},
-            {"type": "Broken_Authentication", "payload": "Bearer null", "method": "GET", "headers": {"Authorization": "Bearer null"}},
-            {"type": "BOLA_IDOR", "payload": "id=1", "method": "GET", "path_suffix": "/1"},
+            {"type": "Broken_Authentication", "payload": "", "method": "GET", "headers": {"Authorization": "Bearer null"}},
+            {"type": "BOLA_IDOR", "payload": "", "method": "GET", "path_suffix": "/1"},
             {"type": "Baseline_Inspection", "payload": "", "method": "GET"}
         ]
 
@@ -141,11 +142,11 @@ def run_pipeline(target_url: str):
                     response_time=req_data.get("response_time", 0.0)
                 )
 
-        avg_score = round(sum(total_scores) / len(total_scores), 2) if total_scores else 0.0
+        overall_score = round(max(total_scores), 2) if total_scores else 0.0
         complete_scan_session(
             session_id=session_obj.id,
-            overall_risk_score=avg_score,
-            overall_severity=RiskScorer.classify_severity(avg_score),
+            overall_risk_score=overall_score,
+            overall_severity=RiskScorer.classify_severity(overall_score),
             total_vulnerabilities=vulnerability_count
         )
 

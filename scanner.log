@@ -15098,3 +15098,747 @@ FROM findings
 2026-08-13 22:57:45 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1/_debug "HTTP/1.1 200 OK"
 2026-08-13 22:57:45 | INFO | api-scanner | Request [GET] http://localhost:5001/users/v1/_debug -> 200 (2.749s)
 2026-08-13 22:57:45 | INFO | api-scanner | Risk Evaluation [GET] http://localhost:5001/users/v1/_debug -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:03:30 | INFO | api-scanner | Database tables initialized successfully.
+2026-08-13 23:03:30 | INFO | api-scanner | Initializing Endpoint Discovery...
+2026-08-13 23:03:30 | INFO | api-scanner | Starting endpoint discovery on target: http://localhost:5001
+2026-08-13 23:03:40 | INFO | httpx | HTTP Request: GET http://localhost:5001 "HTTP/1.1 200 OK"
+2026-08-13 23:03:43 | INFO | httpx | HTTP Request: GET http://localhost:5001/api "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:03:45 | INFO | httpx | HTTP Request: GET http://localhost:5001/api/v1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:03:47 | INFO | httpx | HTTP Request: GET http://localhost:5001/api/v2 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:03:49 | INFO | httpx | HTTP Request: GET http://localhost:5001/v1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:03:51 | INFO | httpx | HTTP Request: GET http://localhost:5001/v2 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:03:53 | INFO | httpx | HTTP Request: GET http://localhost:5001/health "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:03:55 | INFO | httpx | HTTP Request: GET http://localhost:5001/status "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:03:57 | INFO | httpx | HTTP Request: GET http://localhost:5001/users "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:03:59 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1 "HTTP/1.1 200 OK"
+2026-08-13 23:04:01 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1/login "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:04:03 | INFO | httpx | HTTP Request: POST http://localhost:5001/users/v1/login "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:04:06 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1/register "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:04:08 | INFO | httpx | HTTP Request: POST http://localhost:5001/users/v1/register "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:04:10 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1/_debug "HTTP/1.1 200 OK"
+2026-08-13 23:04:13 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1/debug "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:04:15 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1/1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:04:17 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1/2 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:04:19 | INFO | httpx | HTTP Request: GET http://localhost:5001/auth "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:04:21 | INFO | httpx | HTTP Request: GET http://localhost:5001/login "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:04:23 | INFO | httpx | HTTP Request: POST http://localhost:5001/login "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:04:25 | INFO | httpx | HTTP Request: GET http://localhost:5001/createdb "HTTP/1.1 200 OK"
+2026-08-13 23:04:26 | INFO | api-scanner | Successfully loaded Isolation Forest model from C:\Users\rahim\api-security-platform\models\isolation_forest.pkl
+2026-08-13 23:04:29 | INFO | httpx | HTTP Request: GET http://localhost:5001 "HTTP/1.1 200 OK"
+2026-08-13 23:04:29 | INFO | api-scanner | Request [GET] http://localhost:5001 -> 200 (3.117s)
+2026-08-13 23:04:32 | INFO | httpx | HTTP Request: POST http://localhost:5001 "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:04:32 | INFO | api-scanner | Request [POST] http://localhost:5001 -> 405 (2.991s)
+2026-08-13 23:04:32 | INFO | api-scanner | Risk Evaluation [POST] http://localhost:5001 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:04:35 | INFO | httpx | HTTP Request: GET http://localhost:5001?q=%27%20OR%201%3D1%20-- "HTTP/1.1 200 OK"
+2026-08-13 23:04:35 | INFO | api-scanner | Request [GET] http://localhost:5001 -> 200 (2.931s)
+2026-08-13 23:04:35 | INFO | api-scanner | Risk Evaluation [GET] http://localhost:5001 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:04:38 | INFO | httpx | HTTP Request: POST http://localhost:5001 "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:04:38 | INFO | api-scanner | Request [POST] http://localhost:5001 -> 405 (2.918s)
+2026-08-13 23:04:38 | INFO | api-scanner | Risk Evaluation [POST] http://localhost:5001 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:04:41 | INFO | httpx | HTTP Request: GET http://localhost:5001?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 200 OK"
+2026-08-13 23:04:41 | INFO | api-scanner | Request [GET] http://localhost:5001 -> 200 (2.993s)
+2026-08-13 23:04:41 | INFO | api-scanner | Risk Evaluation [GET] http://localhost:5001 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:04:44 | INFO | httpx | HTTP Request: GET http://localhost:5001 "HTTP/1.1 200 OK"
+2026-08-13 23:04:44 | INFO | api-scanner | Request [GET] http://localhost:5001 -> 200 (2.977s)
+2026-08-13 23:04:44 | INFO | api-scanner | Risk Evaluation [GET] http://localhost:5001 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:04:48 | INFO | httpx | HTTP Request: GET http://localhost:5001 "HTTP/1.1 200 OK"
+2026-08-13 23:04:48 | INFO | api-scanner | Request [GET] http://localhost:5001 -> 200 (3.153s)
+2026-08-13 23:04:48 | INFO | api-scanner | Risk Evaluation [GET] http://localhost:5001 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:04:51 | INFO | httpx | HTTP Request: GET http://localhost:5001 "HTTP/1.1 200 OK"
+2026-08-13 23:04:51 | INFO | api-scanner | Request [GET] http://localhost:5001 -> 200 (2.929s)
+2026-08-13 23:04:51 | INFO | api-scanner | Risk Evaluation [GET] http://localhost:5001 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:04:54 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1 "HTTP/1.1 200 OK"
+2026-08-13 23:04:54 | INFO | api-scanner | Request [GET] http://localhost:5001/users/v1 -> 200 (2.931s)
+2026-08-13 23:04:56 | INFO | httpx | HTTP Request: POST http://localhost:5001/users/v1 "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:04:56 | INFO | api-scanner | Request [POST] http://localhost:5001/users/v1 -> 405 (2.955s)
+2026-08-13 23:04:57 | INFO | api-scanner | Risk Evaluation [POST] http://localhost:5001/users/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:05:02 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1?q=%27%20OR%201%3D1%20-- "HTTP/1.1 200 OK"
+2026-08-13 23:05:02 | INFO | api-scanner | Request [GET] http://localhost:5001/users/v1 -> 200 (3.031s)
+2026-08-13 23:05:02 | INFO | api-scanner | Risk Evaluation [GET] http://localhost:5001/users/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:05:05 | INFO | httpx | HTTP Request: POST http://localhost:5001/users/v1 "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:05:05 | INFO | api-scanner | Request [POST] http://localhost:5001/users/v1 -> 405 (2.937s)
+2026-08-13 23:05:05 | INFO | api-scanner | Risk Evaluation [POST] http://localhost:5001/users/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:05:09 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 200 OK"
+2026-08-13 23:05:09 | INFO | api-scanner | Request [GET] http://localhost:5001/users/v1 -> 200 (3.286s)
+2026-08-13 23:05:09 | INFO | api-scanner | Risk Evaluation [GET] http://localhost:5001/users/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:05:12 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1 "HTTP/1.1 200 OK"
+2026-08-13 23:05:12 | INFO | api-scanner | Request [GET] http://localhost:5001/users/v1 -> 200 (2.954s)
+2026-08-13 23:05:12 | INFO | api-scanner | Risk Evaluation [GET] http://localhost:5001/users/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:05:15 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1 "HTTP/1.1 200 OK"
+2026-08-13 23:05:15 | INFO | api-scanner | Request [GET] http://localhost:5001/users/v1 -> 200 (3.006s)
+2026-08-13 23:05:15 | INFO | api-scanner | Risk Evaluation [GET] http://localhost:5001/users/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:05:18 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1 "HTTP/1.1 200 OK"
+2026-08-13 23:05:18 | INFO | api-scanner | Request [GET] http://localhost:5001/users/v1 -> 200 (2.894s)
+2026-08-13 23:05:18 | INFO | api-scanner | Risk Evaluation [GET] http://localhost:5001/users/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:05:21 | INFO | httpx | HTTP Request: POST http://localhost:5001/users/v1/login "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:05:21 | INFO | api-scanner | Request [POST] http://localhost:5001/users/v1/login -> 400 (2.966s)
+2026-08-13 23:05:23 | INFO | httpx | HTTP Request: POST http://localhost:5001/users/v1/login "HTTP/1.1 200 OK"
+2026-08-13 23:05:23 | INFO | api-scanner | Request [POST] http://localhost:5001/users/v1/login -> 200 (2.885s)
+2026-08-13 23:05:24 | INFO | api-scanner | Risk Evaluation [POST] http://localhost:5001/users/v1/login -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:05:26 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1/login?q=%27%20OR%201%3D1%20-- "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:05:26 | INFO | api-scanner | Request [GET] http://localhost:5001/users/v1/login -> 404 (2.754s)
+2026-08-13 23:05:29 | INFO | httpx | HTTP Request: POST http://localhost:5001/users/v1/login "HTTP/1.1 415 UNSUPPORTED MEDIA TYPE"
+2026-08-13 23:05:29 | INFO | api-scanner | Request [POST] http://localhost:5001/users/v1/login -> 415 (2.820s)
+2026-08-13 23:05:29 | INFO | api-scanner | Risk Evaluation [POST] http://localhost:5001/users/v1/login -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:05:32 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1/login?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:05:32 | INFO | api-scanner | Request [GET] http://localhost:5001/users/v1/login -> 404 (2.743s)
+2026-08-13 23:05:35 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1/login "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:05:35 | INFO | api-scanner | Request [GET] http://localhost:5001/users/v1/login -> 404 (2.730s)
+2026-08-13 23:05:37 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1/login/1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:05:37 | INFO | api-scanner | Request [GET] http://localhost:5001/users/v1/login/1 -> 404 (2.768s)
+2026-08-13 23:05:40 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1/login "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:05:40 | INFO | api-scanner | Request [GET] http://localhost:5001/users/v1/login -> 404 (2.815s)
+2026-08-13 23:05:43 | INFO | httpx | HTTP Request: POST http://localhost:5001/users/v1/register "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:05:43 | INFO | api-scanner | Request [POST] http://localhost:5001/users/v1/register -> 400 (2.740s)
+2026-08-13 23:05:46 | INFO | httpx | HTTP Request: POST http://localhost:5001/users/v1/register "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:05:46 | INFO | api-scanner | Request [POST] http://localhost:5001/users/v1/register -> 400 (2.775s)
+2026-08-13 23:05:46 | INFO | api-scanner | Risk Evaluation [POST] http://localhost:5001/users/v1/register -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:05:49 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1/register?q=%27%20OR%201%3D1%20-- "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:05:49 | INFO | api-scanner | Request [GET] http://localhost:5001/users/v1/register -> 404 (2.715s)
+2026-08-13 23:05:51 | INFO | httpx | HTTP Request: POST http://localhost:5001/users/v1/register "HTTP/1.1 415 UNSUPPORTED MEDIA TYPE"
+2026-08-13 23:05:51 | INFO | api-scanner | Request [POST] http://localhost:5001/users/v1/register -> 415 (2.805s)
+2026-08-13 23:05:51 | INFO | api-scanner | Risk Evaluation [POST] http://localhost:5001/users/v1/register -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:05:54 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1/register?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:05:54 | INFO | api-scanner | Request [GET] http://localhost:5001/users/v1/register -> 404 (2.788s)
+2026-08-13 23:05:57 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1/register "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:05:57 | INFO | api-scanner | Request [GET] http://localhost:5001/users/v1/register -> 404 (2.753s)
+2026-08-13 23:06:00 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1/register/1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:06:00 | INFO | api-scanner | Request [GET] http://localhost:5001/users/v1/register/1 -> 404 (2.843s)
+2026-08-13 23:06:03 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1/register "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:06:03 | INFO | api-scanner | Request [GET] http://localhost:5001/users/v1/register -> 404 (2.830s)
+2026-08-13 23:06:06 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1/_debug "HTTP/1.1 200 OK"
+2026-08-13 23:06:06 | INFO | api-scanner | Request [GET] http://localhost:5001/users/v1/_debug -> 200 (2.725s)
+2026-08-13 23:06:08 | INFO | httpx | HTTP Request: POST http://localhost:5001/users/v1/_debug "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:06:08 | INFO | api-scanner | Request [POST] http://localhost:5001/users/v1/_debug -> 405 (2.806s)
+2026-08-13 23:06:08 | INFO | api-scanner | Risk Evaluation [POST] http://localhost:5001/users/v1/_debug -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:06:11 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1/_debug?q=%27%20OR%201%3D1%20-- "HTTP/1.1 200 OK"
+2026-08-13 23:06:11 | INFO | api-scanner | Request [GET] http://localhost:5001/users/v1/_debug -> 200 (2.767s)
+2026-08-13 23:06:11 | INFO | api-scanner | Risk Evaluation [GET] http://localhost:5001/users/v1/_debug -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:06:17 | INFO | httpx | HTTP Request: POST http://localhost:5001/users/v1/_debug "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:06:17 | INFO | api-scanner | Request [POST] http://localhost:5001/users/v1/_debug -> 405 (2.715s)
+2026-08-13 23:06:17 | INFO | api-scanner | Risk Evaluation [POST] http://localhost:5001/users/v1/_debug -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:06:20 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1/_debug?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 200 OK"
+2026-08-13 23:06:20 | INFO | api-scanner | Request [GET] http://localhost:5001/users/v1/_debug -> 200 (2.829s)
+2026-08-13 23:06:20 | INFO | api-scanner | Risk Evaluation [GET] http://localhost:5001/users/v1/_debug -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:06:23 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1/_debug "HTTP/1.1 200 OK"
+2026-08-13 23:06:23 | INFO | api-scanner | Request [GET] http://localhost:5001/users/v1/_debug -> 200 (2.750s)
+2026-08-13 23:06:23 | INFO | api-scanner | Risk Evaluation [GET] http://localhost:5001/users/v1/_debug -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:06:25 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1/_debug/1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:06:25 | INFO | api-scanner | Request [GET] http://localhost:5001/users/v1/_debug/1 -> 404 (2.790s)
+2026-08-13 23:06:28 | INFO | httpx | HTTP Request: GET http://localhost:5001/users/v1/_debug "HTTP/1.1 200 OK"
+2026-08-13 23:06:28 | INFO | api-scanner | Request [GET] http://localhost:5001/users/v1/_debug -> 200 (2.702s)
+2026-08-13 23:06:28 | INFO | api-scanner | Risk Evaluation [GET] http://localhost:5001/users/v1/_debug -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:06:31 | INFO | httpx | HTTP Request: GET http://localhost:5001/createdb "HTTP/1.1 200 OK"
+2026-08-13 23:06:31 | INFO | api-scanner | Request [GET] http://localhost:5001/createdb -> 200 (2.775s)
+2026-08-13 23:06:34 | INFO | httpx | HTTP Request: POST http://localhost:5001/createdb "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:06:34 | INFO | api-scanner | Request [POST] http://localhost:5001/createdb -> 405 (2.765s)
+2026-08-13 23:06:34 | INFO | api-scanner | Risk Evaluation [POST] http://localhost:5001/createdb -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:06:37 | INFO | httpx | HTTP Request: GET http://localhost:5001/createdb?q=%27%20OR%201%3D1%20-- "HTTP/1.1 200 OK"
+2026-08-13 23:06:37 | INFO | api-scanner | Request [GET] http://localhost:5001/createdb -> 200 (2.787s)
+2026-08-13 23:06:37 | INFO | api-scanner | Risk Evaluation [GET] http://localhost:5001/createdb -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:06:39 | INFO | httpx | HTTP Request: POST http://localhost:5001/createdb "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:06:39 | INFO | api-scanner | Request [POST] http://localhost:5001/createdb -> 405 (2.711s)
+2026-08-13 23:06:39 | INFO | api-scanner | Risk Evaluation [POST] http://localhost:5001/createdb -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:06:42 | INFO | httpx | HTTP Request: GET http://localhost:5001/createdb?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 200 OK"
+2026-08-13 23:06:42 | INFO | api-scanner | Request [GET] http://localhost:5001/createdb -> 200 (2.837s)
+2026-08-13 23:06:42 | INFO | api-scanner | Risk Evaluation [GET] http://localhost:5001/createdb -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:06:45 | INFO | httpx | HTTP Request: GET http://localhost:5001/createdb "HTTP/1.1 200 OK"
+2026-08-13 23:06:45 | INFO | api-scanner | Request [GET] http://localhost:5001/createdb -> 200 (2.881s)
+2026-08-13 23:06:45 | INFO | api-scanner | Risk Evaluation [GET] http://localhost:5001/createdb -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:06:48 | INFO | httpx | HTTP Request: GET http://localhost:5001/createdb/1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:06:48 | INFO | api-scanner | Request [GET] http://localhost:5001/createdb/1 -> 404 (2.716s)
+2026-08-13 23:06:51 | INFO | httpx | HTTP Request: GET http://localhost:5001/createdb "HTTP/1.1 200 OK"
+2026-08-13 23:06:51 | INFO | api-scanner | Request [GET] http://localhost:5001/createdb -> 200 (2.817s)
+2026-08-13 23:06:51 | INFO | api-scanner | Risk Evaluation [GET] http://localhost:5001/createdb -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:12:11 | INFO | api-scanner | Database tables initialized successfully.
+2026-08-13 23:12:28 | INFO | api-scanner | Starting endpoint discovery on target: http://127.0.0.1:5001
+2026-08-13 23:12:29 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001 "HTTP/1.1 200 OK"
+2026-08-13 23:12:30 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/api "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:12:30 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/api/v1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:12:30 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/api/v2 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:12:30 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/v1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:12:30 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/v2 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:12:30 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/health "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:12:30 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/status "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:12:30 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:12:30 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1 "HTTP/1.1 200 OK"
+2026-08-13 23:12:30 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/login "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:12:30 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/login "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:12:30 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/register "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:12:30 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/register "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:12:30 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/_debug "HTTP/1.1 200 OK"
+2026-08-13 23:12:30 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/debug "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:12:30 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:12:30 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/2 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:12:30 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/auth "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:12:30 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/login "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:12:30 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/login "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:12:30 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/createdb "HTTP/1.1 200 OK"
+2026-08-13 23:12:30 | INFO | api-scanner | Successfully loaded Isolation Forest model from c:\Users\rahim\api-security-platform\models\isolation_forest.pkl
+2026-08-13 23:12:31 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001 "HTTP/1.1 200 OK"
+2026-08-13 23:12:31 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001 -> 200 (0.762s)
+2026-08-13 23:12:32 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001 "HTTP/1.1 200 OK"
+2026-08-13 23:12:32 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001 -> 200 (1.020s)
+2026-08-13 23:12:32 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:12:33 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1 "HTTP/1.1 200 OK"
+2026-08-13 23:12:33 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1 -> 200 (0.709s)
+2026-08-13 23:12:34 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1 "HTTP/1.1 200 OK"
+2026-08-13 23:12:34 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1 -> 200 (0.887s)
+2026-08-13 23:12:34 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:12:35 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/login "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:12:35 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/login -> 400 (0.806s)
+2026-08-13 23:12:36 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/login "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:12:36 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/login -> 404 (0.688s)
+2026-08-13 23:12:36 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/register "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:12:36 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/register -> 400 (0.713s)
+2026-08-13 23:12:37 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/register "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:12:37 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/register -> 404 (0.684s)
+2026-08-13 23:12:38 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/_debug "HTTP/1.1 200 OK"
+2026-08-13 23:12:38 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/_debug -> 200 (0.821s)
+2026-08-13 23:12:39 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/_debug "HTTP/1.1 200 OK"
+2026-08-13 23:12:39 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/_debug -> 200 (0.690s)
+2026-08-13 23:12:39 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1/_debug -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:12:39 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/createdb "HTTP/1.1 200 OK"
+2026-08-13 23:12:39 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/createdb -> 200 (0.763s)
+2026-08-13 23:18:12 | INFO | api-scanner | Starting endpoint discovery on target: http://127.0.0.1:5001
+2026-08-13 23:18:13 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001 "HTTP/1.1 200 OK"
+2026-08-13 23:18:14 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/api "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:18:14 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/api/v1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:18:14 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/api/v2 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:18:14 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/v1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:18:14 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/v2 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:18:14 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/health "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:18:14 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/status "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:18:14 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:18:14 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1 "HTTP/1.1 200 OK"
+2026-08-13 23:18:14 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/login "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:18:14 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/login "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:18:14 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/register "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:18:14 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/register "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:18:14 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/_debug "HTTP/1.1 200 OK"
+2026-08-13 23:18:14 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/debug "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:18:14 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:18:14 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/2 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:18:14 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/auth "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:18:14 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/login "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:18:14 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/login "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:18:14 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/createdb "HTTP/1.1 500 INTERNAL SERVER ERROR"
+2026-08-13 23:18:59 | INFO | api-scanner | Database tables initialized successfully.
+2026-08-13 23:19:10 | INFO | api-scanner | Starting endpoint discovery on target: http://127.0.0.1:5001
+2026-08-13 23:19:10 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001 "HTTP/1.1 200 OK"
+2026-08-13 23:19:11 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/api "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:19:11 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/api/v1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:19:11 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/api/v2 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:19:11 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/v1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:19:11 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/v2 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:19:11 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/health "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:19:11 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/status "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:19:11 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:19:11 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1 "HTTP/1.1 200 OK"
+2026-08-13 23:19:11 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/login "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:19:11 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/login "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:19:11 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/register "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:19:11 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/register "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:19:11 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/_debug "HTTP/1.1 200 OK"
+2026-08-13 23:19:11 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/debug "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:19:11 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:19:11 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/2 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:19:11 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/auth "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:19:11 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/login "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:19:11 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/login "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:19:11 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/createdb "HTTP/1.1 200 OK"
+2026-08-13 23:19:12 | INFO | api-scanner | Successfully loaded Isolation Forest model from C:\Users\rahim\api-security-platform\models\isolation_forest.pkl
+2026-08-13 23:19:13 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001 "HTTP/1.1 200 OK"
+2026-08-13 23:19:13 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001 -> 200 (0.655s)
+2026-08-13 23:19:14 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001 "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:19:14 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001 -> 405 (0.776s)
+2026-08-13 23:19:14 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:19:14 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001?q=%27%20OR%201%3D1%20-- "HTTP/1.1 200 OK"
+2026-08-13 23:19:14 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001 -> 200 (0.715s)
+2026-08-13 23:19:14 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:19:15 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001 "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:19:15 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001 -> 405 (0.807s)
+2026-08-13 23:19:15 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:19:16 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 200 OK"
+2026-08-13 23:19:16 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001 -> 200 (0.746s)
+2026-08-13 23:19:16 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:19:17 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001 "HTTP/1.1 200 OK"
+2026-08-13 23:19:17 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001 -> 200 (0.730s)
+2026-08-13 23:19:17 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:19:18 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001 "HTTP/1.1 200 OK"
+2026-08-13 23:19:18 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001 -> 200 (0.678s)
+2026-08-13 23:19:18 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:19:18 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1 "HTTP/1.1 200 OK"
+2026-08-13 23:19:18 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1 -> 200 (0.685s)
+2026-08-13 23:19:19 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1 "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:19:19 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1 -> 405 (0.777s)
+2026-08-13 23:19:19 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:19:20 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1?q=%27%20OR%201%3D1%20-- "HTTP/1.1 200 OK"
+2026-08-13 23:19:20 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1 -> 200 (0.675s)
+2026-08-13 23:19:20 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:19:20 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1 "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:19:20 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1 -> 405 (0.703s)
+2026-08-13 23:19:20 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:19:21 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 200 OK"
+2026-08-13 23:19:21 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1 -> 200 (0.678s)
+2026-08-13 23:19:21 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:19:22 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1 "HTTP/1.1 200 OK"
+2026-08-13 23:19:22 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1 -> 200 (0.747s)
+2026-08-13 23:19:22 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:19:23 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1 "HTTP/1.1 200 OK"
+2026-08-13 23:19:23 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1 -> 200 (0.686s)
+2026-08-13 23:19:23 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:19:23 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/login "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:19:23 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/login -> 400 (0.641s)
+2026-08-13 23:19:24 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/login "HTTP/1.1 200 OK"
+2026-08-13 23:19:24 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/login -> 200 (0.705s)
+2026-08-13 23:19:24 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1/login -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:19:25 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/login?q=%27%20OR%201%3D1%20-- "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:19:25 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/login -> 404 (0.723s)
+2026-08-13 23:19:25 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/login "HTTP/1.1 415 UNSUPPORTED MEDIA TYPE"
+2026-08-13 23:19:25 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/login -> 415 (0.722s)
+2026-08-13 23:19:26 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1/login -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:19:26 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/login?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:19:26 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/login -> 404 (0.723s)
+2026-08-13 23:19:27 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/login "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:19:27 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/login -> 404 (0.682s)
+2026-08-13 23:19:28 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/login/1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:19:28 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/login/1 -> 404 (0.652s)
+2026-08-13 23:19:28 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/register "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:19:28 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/register -> 400 (0.696s)
+2026-08-13 23:19:29 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/register "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:19:29 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/register -> 400 (0.684s)
+2026-08-13 23:19:29 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1/register -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:19:30 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/register?q=%27%20OR%201%3D1%20-- "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:19:30 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/register -> 404 (0.780s)
+2026-08-13 23:19:31 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/register "HTTP/1.1 415 UNSUPPORTED MEDIA TYPE"
+2026-08-13 23:19:31 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/register -> 415 (0.706s)
+2026-08-13 23:19:31 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1/register -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:19:31 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/register?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:19:31 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/register -> 404 (0.705s)
+2026-08-13 23:19:32 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/register "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:19:32 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/register -> 404 (0.690s)
+2026-08-13 23:19:33 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/register/1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:19:33 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/register/1 -> 404 (0.663s)
+2026-08-13 23:19:33 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/_debug "HTTP/1.1 200 OK"
+2026-08-13 23:19:33 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/_debug -> 200 (0.654s)
+2026-08-13 23:19:34 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/_debug "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:19:34 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/_debug -> 405 (0.643s)
+2026-08-13 23:19:34 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1/_debug -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:19:35 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/_debug?q=%27%20OR%201%3D1%20-- "HTTP/1.1 200 OK"
+2026-08-13 23:19:35 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/_debug -> 200 (0.698s)
+2026-08-13 23:19:35 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1/_debug -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:19:36 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/_debug "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:19:36 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/_debug -> 405 (0.805s)
+2026-08-13 23:19:36 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1/_debug -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:19:36 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/_debug?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 200 OK"
+2026-08-13 23:19:36 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/_debug -> 200 (0.676s)
+2026-08-13 23:19:36 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1/_debug -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:19:37 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/_debug "HTTP/1.1 200 OK"
+2026-08-13 23:19:37 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/_debug -> 200 (0.775s)
+2026-08-13 23:19:37 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1/_debug -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:19:38 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/_debug/1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:19:38 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/_debug/1 -> 404 (0.655s)
+2026-08-13 23:19:39 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/createdb "HTTP/1.1 200 OK"
+2026-08-13 23:19:39 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/createdb -> 200 (0.712s)
+2026-08-13 23:19:39 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/createdb "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:19:39 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/createdb -> 405 (0.632s)
+2026-08-13 23:19:39 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/createdb -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:19:40 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/createdb?q=%27%20OR%201%3D1%20-- "HTTP/1.1 200 OK"
+2026-08-13 23:19:40 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/createdb -> 200 (0.902s)
+2026-08-13 23:19:40 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/createdb -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:19:41 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/createdb "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:19:41 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/createdb -> 405 (0.667s)
+2026-08-13 23:19:41 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/createdb -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:19:42 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/createdb?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 200 OK"
+2026-08-13 23:19:42 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/createdb -> 200 (0.727s)
+2026-08-13 23:19:42 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/createdb -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:19:42 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/createdb "HTTP/1.1 200 OK"
+2026-08-13 23:19:42 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/createdb -> 200 (0.744s)
+2026-08-13 23:19:42 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/createdb -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:19:43 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/createdb/1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:19:43 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/createdb/1 -> 404 (0.659s)
+2026-08-13 23:23:39 | INFO | api-scanner | Database tables initialized successfully.
+2026-08-13 23:23:49 | INFO | api-scanner | Starting endpoint discovery on target: http://127.0.0.1:5001
+2026-08-13 23:23:50 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001 "HTTP/1.1 200 OK"
+2026-08-13 23:23:50 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/api "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:23:50 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/api/v1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:23:50 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/api/v2 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:23:50 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/v1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:23:50 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/v2 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:23:50 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/health "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:23:50 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/status "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:23:50 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:23:51 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1 "HTTP/1.1 200 OK"
+2026-08-13 23:23:51 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/login "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:23:51 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/login "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:23:51 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/register "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:23:51 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/register "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:23:51 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/_debug "HTTP/1.1 200 OK"
+2026-08-13 23:23:51 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/debug "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:23:51 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:23:51 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/2 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:23:51 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/auth "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:23:51 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/login "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:23:51 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/login "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:23:51 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/createdb "HTTP/1.1 200 OK"
+2026-08-13 23:23:52 | INFO | api-scanner | Successfully loaded Isolation Forest model from C:\Users\rahim\api-security-platform\models\isolation_forest.pkl
+2026-08-13 23:23:53 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001 "HTTP/1.1 200 OK"
+2026-08-13 23:23:53 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001 -> 200 (0.713s)
+2026-08-13 23:23:53 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001 "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:23:53 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001 -> 405 (0.817s)
+2026-08-13 23:23:54 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:23:54 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001?q=%27%20OR%201%3D1%20-- "HTTP/1.1 200 OK"
+2026-08-13 23:23:54 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001 -> 200 (0.683s)
+2026-08-13 23:23:54 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:23:55 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001 "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:23:55 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001 -> 405 (0.728s)
+2026-08-13 23:23:55 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:23:56 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 200 OK"
+2026-08-13 23:23:56 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001 -> 200 (0.767s)
+2026-08-13 23:23:56 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:23:57 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001 "HTTP/1.1 200 OK"
+2026-08-13 23:23:57 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001 -> 200 (0.751s)
+2026-08-13 23:23:57 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:23:57 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001 "HTTP/1.1 200 OK"
+2026-08-13 23:23:57 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001 -> 200 (0.713s)
+2026-08-13 23:23:57 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:23:58 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1 "HTTP/1.1 200 OK"
+2026-08-13 23:23:58 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1 -> 200 (0.719s)
+2026-08-13 23:23:59 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1 "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:23:59 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1 -> 405 (0.787s)
+2026-08-13 23:23:59 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:24:00 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1?q=%27%20OR%201%3D1%20-- "HTTP/1.1 200 OK"
+2026-08-13 23:24:00 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1 -> 200 (0.707s)
+2026-08-13 23:24:00 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:24:00 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1 "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:24:00 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1 -> 405 (0.739s)
+2026-08-13 23:24:00 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:24:01 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 200 OK"
+2026-08-13 23:24:01 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1 -> 200 (0.746s)
+2026-08-13 23:24:01 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:24:02 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1 "HTTP/1.1 200 OK"
+2026-08-13 23:24:02 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1 -> 200 (0.663s)
+2026-08-13 23:24:02 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1 -> Score: 73.93/100 (HIGH) [Proof: True]
+2026-08-13 23:24:03 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1 "HTTP/1.1 200 OK"
+2026-08-13 23:24:03 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1 -> 200 (0.662s)
+2026-08-13 23:24:03 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:24:03 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/login "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:24:03 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/login -> 400 (0.641s)
+2026-08-13 23:24:04 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/login "HTTP/1.1 200 OK"
+2026-08-13 23:24:04 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/login -> 200 (0.647s)
+2026-08-13 23:24:04 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1/login -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:24:05 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/login?q=%27%20OR%201%3D1%20-- "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:24:05 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/login -> 404 (0.792s)
+2026-08-13 23:24:05 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/login "HTTP/1.1 415 UNSUPPORTED MEDIA TYPE"
+2026-08-13 23:24:05 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/login -> 415 (0.709s)
+2026-08-13 23:24:05 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1/login -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:24:06 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/login?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:24:06 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/login -> 404 (0.734s)
+2026-08-13 23:24:07 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/login "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:24:07 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/login -> 404 (0.699s)
+2026-08-13 23:24:08 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/login/1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:24:08 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/login/1 -> 404 (0.689s)
+2026-08-13 23:24:08 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/register "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:24:08 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/register -> 400 (0.674s)
+2026-08-13 23:24:09 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/register "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:24:09 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/register -> 400 (0.686s)
+2026-08-13 23:24:09 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1/register -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:24:10 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/register?q=%27%20OR%201%3D1%20-- "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:24:10 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/register -> 404 (0.823s)
+2026-08-13 23:24:11 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/register "HTTP/1.1 415 UNSUPPORTED MEDIA TYPE"
+2026-08-13 23:24:11 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/register -> 415 (0.733s)
+2026-08-13 23:24:11 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1/register -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:24:11 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/register?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:24:11 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/register -> 404 (0.737s)
+2026-08-13 23:24:12 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/register "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:24:12 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/register -> 404 (0.736s)
+2026-08-13 23:24:13 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/register/1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:24:13 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/register/1 -> 404 (0.654s)
+2026-08-13 23:24:14 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/_debug "HTTP/1.1 200 OK"
+2026-08-13 23:24:14 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/_debug -> 200 (0.676s)
+2026-08-13 23:24:14 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/_debug "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:24:14 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/_debug -> 405 (0.685s)
+2026-08-13 23:24:14 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1/_debug -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:24:15 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/_debug?q=%27%20OR%201%3D1%20-- "HTTP/1.1 200 OK"
+2026-08-13 23:24:15 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/_debug -> 200 (0.787s)
+2026-08-13 23:24:15 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1/_debug -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:24:16 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/_debug "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:24:16 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/_debug -> 405 (0.728s)
+2026-08-13 23:24:16 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1/_debug -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:24:17 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/_debug?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 200 OK"
+2026-08-13 23:24:17 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/_debug -> 200 (0.759s)
+2026-08-13 23:24:17 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1/_debug -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:24:17 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/_debug "HTTP/1.1 200 OK"
+2026-08-13 23:24:17 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/_debug -> 200 (0.704s)
+2026-08-13 23:24:17 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1/_debug -> Score: 72.84/100 (HIGH) [Proof: True]
+2026-08-13 23:24:18 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/_debug/1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:24:18 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/_debug/1 -> 404 (0.657s)
+2026-08-13 23:24:19 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/createdb "HTTP/1.1 200 OK"
+2026-08-13 23:24:19 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/createdb -> 200 (0.704s)
+2026-08-13 23:24:19 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/createdb "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:24:19 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/createdb -> 405 (0.669s)
+2026-08-13 23:24:19 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/createdb -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:24:20 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/createdb?q=%27%20OR%201%3D1%20-- "HTTP/1.1 200 OK"
+2026-08-13 23:24:20 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/createdb -> 200 (0.827s)
+2026-08-13 23:24:20 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/createdb -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:24:21 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/createdb "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:24:21 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/createdb -> 405 (0.696s)
+2026-08-13 23:24:21 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/createdb -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:24:22 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/createdb?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 200 OK"
+2026-08-13 23:24:22 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/createdb -> 200 (0.831s)
+2026-08-13 23:24:22 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/createdb -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:24:23 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/createdb "HTTP/1.1 200 OK"
+2026-08-13 23:24:23 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/createdb -> 200 (0.734s)
+2026-08-13 23:24:23 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/createdb -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:24:23 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/createdb/1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:24:23 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/createdb/1 -> 404 (0.638s)
+2026-08-13 23:24:58 | INFO | api-scanner | Starting endpoint discovery on target: http://127.0.0.1:5001
+2026-08-13 23:24:59 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001 "HTTP/1.1 200 OK"
+2026-08-13 23:25:00 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/api "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:00 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/api/v1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:00 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/api/v2 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:00 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/v1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:00 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/v2 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:00 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/health "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:00 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/status "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:00 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:00 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1 "HTTP/1.1 200 OK"
+2026-08-13 23:25:00 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/login "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:00 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/login "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:25:00 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/register "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:00 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/register "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:25:00 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/_debug "HTTP/1.1 200 OK"
+2026-08-13 23:25:00 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/debug "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:00 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/admin "HTTP/1.1 200 OK"
+2026-08-13 23:25:00 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/name1 "HTTP/1.1 200 OK"
+2026-08-13 23:25:00 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/me "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:00 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:00 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/2 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:00 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/books "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:00 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/books/v1 "HTTP/1.1 200 OK"
+2026-08-13 23:25:00 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/books/v1/book1 "HTTP/1.1 401 UNAUTHORIZED"
+2026-08-13 23:25:00 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/auth "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:00 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/login "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:00 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/login "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:00 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/createdb "HTTP/1.1 200 OK"
+2026-08-13 23:25:12 | INFO | api-scanner | Database tables initialized successfully.
+2026-08-13 23:25:18 | INFO | api-scanner | Starting endpoint discovery on target: http://127.0.0.1:5001
+2026-08-13 23:25:18 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001 "HTTP/1.1 200 OK"
+2026-08-13 23:25:19 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/api "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:19 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/api/v1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:19 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/api/v2 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:19 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/v1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:19 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/v2 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:19 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/health "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:19 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/status "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:19 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:19 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1 "HTTP/1.1 200 OK"
+2026-08-13 23:25:19 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/login "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:19 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/login "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:25:19 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/register "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:19 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/register "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:25:19 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/_debug "HTTP/1.1 200 OK"
+2026-08-13 23:25:19 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/debug "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:19 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/admin "HTTP/1.1 200 OK"
+2026-08-13 23:25:19 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/name1 "HTTP/1.1 200 OK"
+2026-08-13 23:25:19 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/me "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:19 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:19 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/2 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:19 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/books "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:19 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/books/v1 "HTTP/1.1 200 OK"
+2026-08-13 23:25:19 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/books/v1/book1 "HTTP/1.1 401 UNAUTHORIZED"
+2026-08-13 23:25:19 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/auth "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:19 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/login "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:19 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/login "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:19 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/createdb "HTTP/1.1 200 OK"
+2026-08-13 23:25:20 | INFO | api-scanner | Successfully loaded Isolation Forest model from C:\Users\rahim\api-security-platform\models\isolation_forest.pkl
+2026-08-13 23:25:21 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001 "HTTP/1.1 200 OK"
+2026-08-13 23:25:21 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001 -> 200 (0.781s)
+2026-08-13 23:25:21 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001 "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:25:21 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001 -> 405 (0.790s)
+2026-08-13 23:25:21 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:22 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001?q=%27%20OR%201%3D1%20-- "HTTP/1.1 200 OK"
+2026-08-13 23:25:22 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001 -> 200 (0.693s)
+2026-08-13 23:25:22 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:23 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001 "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:25:23 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001 -> 405 (0.742s)
+2026-08-13 23:25:23 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:24 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 200 OK"
+2026-08-13 23:25:24 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001 -> 200 (0.703s)
+2026-08-13 23:25:24 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:24 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001 "HTTP/1.1 200 OK"
+2026-08-13 23:25:24 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001 -> 200 (0.709s)
+2026-08-13 23:25:24 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:25 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001 "HTTP/1.1 200 OK"
+2026-08-13 23:25:25 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001 -> 200 (0.730s)
+2026-08-13 23:25:25 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:26 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1 "HTTP/1.1 200 OK"
+2026-08-13 23:25:26 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1 -> 200 (0.647s)
+2026-08-13 23:25:26 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1 "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:25:26 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1 -> 405 (0.717s)
+2026-08-13 23:25:26 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:27 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1?q=%27%20OR%201%3D1%20-- "HTTP/1.1 200 OK"
+2026-08-13 23:25:27 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1 -> 200 (0.707s)
+2026-08-13 23:25:27 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:28 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1 "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:25:28 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1 -> 405 (0.762s)
+2026-08-13 23:25:28 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:29 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 200 OK"
+2026-08-13 23:25:29 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1 -> 200 (0.720s)
+2026-08-13 23:25:29 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:30 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1 "HTTP/1.1 200 OK"
+2026-08-13 23:25:30 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1 -> 200 (0.703s)
+2026-08-13 23:25:30 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1 -> Score: 73.93/100 (HIGH) [Proof: True]
+2026-08-13 23:25:30 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1 "HTTP/1.1 200 OK"
+2026-08-13 23:25:30 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1 -> 200 (0.683s)
+2026-08-13 23:25:30 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:31 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/login "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:25:31 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/login -> 400 (0.643s)
+2026-08-13 23:25:32 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/login "HTTP/1.1 200 OK"
+2026-08-13 23:25:32 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/login -> 200 (0.707s)
+2026-08-13 23:25:32 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1/login -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:32 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/login?q=%27%20OR%201%3D1%20-- "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:32 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/login -> 404 (0.845s)
+2026-08-13 23:25:33 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/login "HTTP/1.1 415 UNSUPPORTED MEDIA TYPE"
+2026-08-13 23:25:33 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/login -> 415 (0.682s)
+2026-08-13 23:25:33 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1/login -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:34 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/login?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:34 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/login -> 404 (0.701s)
+2026-08-13 23:25:35 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/login "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:35 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/login -> 404 (0.675s)
+2026-08-13 23:25:35 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/login/1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:35 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/login/1 -> 404 (0.659s)
+2026-08-13 23:25:36 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/register "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:25:36 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/register -> 400 (0.644s)
+2026-08-13 23:25:37 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/register "HTTP/1.1 400 BAD REQUEST"
+2026-08-13 23:25:37 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/register -> 400 (0.676s)
+2026-08-13 23:25:37 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1/register -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:37 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/register?q=%27%20OR%201%3D1%20-- "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:37 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/register -> 404 (0.809s)
+2026-08-13 23:25:38 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/register "HTTP/1.1 415 UNSUPPORTED MEDIA TYPE"
+2026-08-13 23:25:38 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/register -> 415 (0.715s)
+2026-08-13 23:25:38 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1/register -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:39 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/register?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:39 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/register -> 404 (0.698s)
+2026-08-13 23:25:40 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/register "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:40 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/register -> 404 (0.737s)
+2026-08-13 23:25:40 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/register/1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:40 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/register/1 -> 404 (0.641s)
+2026-08-13 23:25:41 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/_debug "HTTP/1.1 200 OK"
+2026-08-13 23:25:41 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/_debug -> 200 (0.692s)
+2026-08-13 23:25:42 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/_debug "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:25:42 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/_debug -> 405 (0.649s)
+2026-08-13 23:25:42 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1/_debug -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:42 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/_debug?q=%27%20OR%201%3D1%20-- "HTTP/1.1 200 OK"
+2026-08-13 23:25:42 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/_debug -> 200 (0.707s)
+2026-08-13 23:25:43 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1/_debug -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:43 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/_debug "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:25:43 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/_debug -> 405 (0.757s)
+2026-08-13 23:25:43 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1/_debug -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:44 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/_debug?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 200 OK"
+2026-08-13 23:25:44 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/_debug -> 200 (0.706s)
+2026-08-13 23:25:44 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1/_debug -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:45 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/_debug "HTTP/1.1 200 OK"
+2026-08-13 23:25:45 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/_debug -> 200 (0.744s)
+2026-08-13 23:25:45 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1/_debug -> Score: 72.84/100 (HIGH) [Proof: True]
+2026-08-13 23:25:45 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/_debug/1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:45 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/_debug/1 -> 404 (0.687s)
+2026-08-13 23:25:46 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/admin "HTTP/1.1 200 OK"
+2026-08-13 23:25:46 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/admin -> 200 (0.693s)
+2026-08-13 23:25:47 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/admin "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:25:47 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/admin -> 405 (0.625s)
+2026-08-13 23:25:47 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1/admin -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:48 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/admin?q=%27%20OR%201%3D1%20-- "HTTP/1.1 200 OK"
+2026-08-13 23:25:48 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/admin -> 200 (0.705s)
+2026-08-13 23:25:48 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1/admin -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:48 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/admin "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:25:48 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/admin -> 405 (0.737s)
+2026-08-13 23:25:48 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1/admin -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:49 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/admin?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 200 OK"
+2026-08-13 23:25:49 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/admin -> 200 (0.716s)
+2026-08-13 23:25:49 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1/admin -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:50 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/admin "HTTP/1.1 200 OK"
+2026-08-13 23:25:50 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/admin -> 200 (0.696s)
+2026-08-13 23:25:50 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1/admin -> Score: 72.2/100 (HIGH) [Proof: True]
+2026-08-13 23:25:50 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/admin/1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:25:50 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/admin/1 -> 404 (0.648s)
+2026-08-13 23:25:51 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/name1 "HTTP/1.1 200 OK"
+2026-08-13 23:25:51 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/name1 -> 200 (0.636s)
+2026-08-13 23:25:52 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/name1 "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:25:52 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/name1 -> 405 (0.631s)
+2026-08-13 23:25:52 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1/name1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:52 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/name1?q=%27%20OR%201%3D1%20-- "HTTP/1.1 200 OK"
+2026-08-13 23:25:52 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/name1 -> 200 (0.705s)
+2026-08-13 23:25:52 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1/name1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:53 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/users/v1/name1 "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:25:53 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/users/v1/name1 -> 405 (0.714s)
+2026-08-13 23:25:53 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/users/v1/name1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:54 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/name1?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 200 OK"
+2026-08-13 23:25:54 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/name1 -> 200 (0.741s)
+2026-08-13 23:25:54 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1/name1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:55 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/name1 "HTTP/1.1 200 OK"
+2026-08-13 23:25:55 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/name1 -> 200 (0.733s)
+2026-08-13 23:25:55 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1/name1 -> Score: 72.2/100 (HIGH) [Proof: True]
+2026-08-13 23:25:55 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/users/v1/name1 "HTTP/1.1 200 OK"
+2026-08-13 23:25:55 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/users/v1/name1 -> 200 (0.687s)
+2026-08-13 23:25:55 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/users/v1/name1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:56 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/books/v1 "HTTP/1.1 200 OK"
+2026-08-13 23:25:56 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/books/v1 -> 200 (0.650s)
+2026-08-13 23:25:57 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/books/v1 "HTTP/1.1 401 UNAUTHORIZED"
+2026-08-13 23:25:57 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/books/v1 -> 401 (0.743s)
+2026-08-13 23:25:57 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/books/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:58 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/books/v1?q=%27%20OR%201%3D1%20-- "HTTP/1.1 200 OK"
+2026-08-13 23:25:58 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/books/v1 -> 200 (0.694s)
+2026-08-13 23:25:58 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/books/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:58 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/books/v1 "HTTP/1.1 401 UNAUTHORIZED"
+2026-08-13 23:25:58 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/books/v1 -> 401 (0.696s)
+2026-08-13 23:25:58 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/books/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:25:59 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/books/v1?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 200 OK"
+2026-08-13 23:25:59 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/books/v1 -> 200 (0.817s)
+2026-08-13 23:25:59 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/books/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:26:00 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/books/v1 "HTTP/1.1 200 OK"
+2026-08-13 23:26:00 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/books/v1 -> 200 (0.699s)
+2026-08-13 23:26:00 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/books/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:26:01 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/books/v1 "HTTP/1.1 200 OK"
+2026-08-13 23:26:01 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/books/v1 -> 200 (0.671s)
+2026-08-13 23:26:01 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/books/v1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:26:01 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/books/v1/book1 "HTTP/1.1 401 UNAUTHORIZED"
+2026-08-13 23:26:01 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/books/v1/book1 -> 401 (0.627s)
+2026-08-13 23:26:02 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/books/v1/book1 "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:26:02 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/books/v1/book1 -> 405 (0.707s)
+2026-08-13 23:26:02 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/books/v1/book1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:26:03 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/books/v1/book1?q=%27%20OR%201%3D1%20-- "HTTP/1.1 401 UNAUTHORIZED"
+2026-08-13 23:26:03 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/books/v1/book1 -> 401 (0.673s)
+2026-08-13 23:26:03 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/books/v1/book1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:26:03 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/books/v1/book1 "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:26:03 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/books/v1/book1 -> 405 (0.700s)
+2026-08-13 23:26:03 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/books/v1/book1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:26:04 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/books/v1/book1?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 401 UNAUTHORIZED"
+2026-08-13 23:26:04 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/books/v1/book1 -> 401 (0.712s)
+2026-08-13 23:26:04 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/books/v1/book1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:26:05 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/books/v1/book1 "HTTP/1.1 401 UNAUTHORIZED"
+2026-08-13 23:26:05 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/books/v1/book1 -> 401 (0.711s)
+2026-08-13 23:26:05 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/books/v1/book1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:26:06 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/books/v1/book1 "HTTP/1.1 401 UNAUTHORIZED"
+2026-08-13 23:26:06 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/books/v1/book1 -> 401 (0.649s)
+2026-08-13 23:26:06 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/books/v1/book1 -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:26:06 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/createdb "HTTP/1.1 200 OK"
+2026-08-13 23:26:06 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/createdb -> 200 (0.734s)
+2026-08-13 23:26:07 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/createdb "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:26:07 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/createdb -> 405 (0.655s)
+2026-08-13 23:26:07 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/createdb -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:26:08 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/createdb?q=%27%20OR%201%3D1%20-- "HTTP/1.1 200 OK"
+2026-08-13 23:26:08 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/createdb -> 200 (0.870s)
+2026-08-13 23:26:08 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/createdb -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:26:09 | INFO | httpx | HTTP Request: POST http://127.0.0.1:5001/createdb "HTTP/1.1 405 METHOD NOT ALLOWED"
+2026-08-13 23:26:09 | INFO | api-scanner | Request [POST] http://127.0.0.1:5001/createdb -> 405 (0.677s)
+2026-08-13 23:26:09 | INFO | api-scanner | Risk Evaluation [POST] http://127.0.0.1:5001/createdb -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:26:09 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/createdb?q=%3B%20cat%20%2Fetc%2Fpasswd "HTTP/1.1 200 OK"
+2026-08-13 23:26:09 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/createdb -> 200 (0.759s)
+2026-08-13 23:26:09 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/createdb -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:26:10 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/createdb "HTTP/1.1 200 OK"
+2026-08-13 23:26:10 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/createdb -> 200 (0.784s)
+2026-08-13 23:26:10 | INFO | api-scanner | Risk Evaluation [GET] http://127.0.0.1:5001/createdb -> Score: 0.0/100 (NONE) [Proof: False]
+2026-08-13 23:26:11 | INFO | httpx | HTTP Request: GET http://127.0.0.1:5001/createdb/1 "HTTP/1.1 404 NOT FOUND"
+2026-08-13 23:26:11 | INFO | api-scanner | Request [GET] http://127.0.0.1:5001/createdb/1 -> 404 (0.749s)

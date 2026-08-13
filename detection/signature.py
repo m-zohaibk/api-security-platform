@@ -87,10 +87,10 @@ class SignatureDetector:
     ]
 
     SENSITIVE_DATA_PATTERNS = [
-        r"(?i)\bpassword\b\s*[:=]\s*[\"'][^\"']+[\"']",
-        r"(?i)\bsecret_key\b\s*[:=]\s*[\"'][^\"']+[\"']",
-        r"(?i)\baccess_token\b\s*[:=]\s*[\"'][^\"']+[\"']",
-        r"(?i)\bapi_key\b\s*[:=]\s*[\"'][^\"']+[\"']"
+        r"(?i)[\"']?password[\"']?\s*[:=]\s*[\"'][^\"']+[\"']",
+        r"(?i)[\"']?secret_key[\"']?\s*[:=]\s*[\"'][^\"']+[\"']",
+        r"(?i)[\"']?access_token[\"']?\s*[:=]\s*[\"'][^\"']+[\"']",
+        r"(?i)[\"']?api_key[\"']?\s*[:=]\s*[\"'][^\"']+[\"']"
     ]
 
     def __init__(self, payloads_dir: Optional[str] = None):
@@ -165,10 +165,13 @@ class SignatureDetector:
         # Check payload syntax matches for injection candidate categories
         candidate_category = None
         candidate_rule = ""
-        for category in ["SQL_Injection", "XSS", "Command_Injection", "Auth_Weakness"]:
+        auth_header_val = telemetry_data.get("request_headers", {}).get("Authorization", "")
+        combined_probe_text = f"{target_string} {auth_header_val}"
+
+        for category in ["SQL_Injection", "XSS", "Command_Injection", "Auth_Weakness", "BOLA_IDOR"]:
             rules = self.REGEX_RULES.get(category, [])
             for rule in rules:
-                if re.search(rule, payload) or (category == "SQL_Injection" and re.search(rule, target_string)):
+                if re.search(rule, payload) or re.search(rule, combined_probe_text):
                     candidate_category = category
                     candidate_rule = rule
                     break
@@ -265,14 +268,16 @@ class SignatureDetector:
                     proof_of_concept = "Command payload syntax matched without shell output or execution delay"
 
             elif candidate_category == "Auth_Weakness":
+                auth_hdr = telemetry_data.get("request_headers", {}).get("Authorization", "")
                 is_jwt_alg_none = bool(re.search(r"(?i)alg\s*:\s*\"?none\"?", target_string))
-                if (resp_status in [200, 201] and payload) or is_jwt_alg_none:
+                has_sensitive_data = any(re.search(pat, resp_body, re.I) for pat in [r"\"email\":", r"\"password\":", r"\"admin\":", r"\"token\":"])
+                if (resp_status in [200, 201] and (has_sensitive_data or not auth_hdr or is_jwt_alg_none)):
                     matched = True
                     has_proof = True
                     finding_status = "Confirmed"
                     confidence = "High"
                     points = 40
-                    proof_of_concept = "Auth parameter / JWT 'alg: none' accepted by server"
+                    proof_of_concept = "Unauthenticated access or invalid auth token returned sensitive resource telemetry"
                 else:
                     matched = True
                     has_proof = False
@@ -281,11 +286,29 @@ class SignatureDetector:
                     points = 10
                     proof_of_concept = "Unverified auth parameter payload"
 
-        # BOLA / IDOR Proof Verification
+            elif candidate_category == "BOLA_IDOR":
+                auth_header = telemetry_data.get("request_headers", {}).get("Authorization", "")
+                has_sensitive_data = any(re.search(pat, resp_body, re.I) for pat in [r"\"email\":", r"\"ssn\":", r"\"password\":", r"\"role\":", r"\"token\":", r"\"username\":"])
+                if resp_status in [200, 201] and (has_sensitive_data or not auth_header):
+                    matched = True
+                    has_proof = True
+                    finding_status = "Confirmed"
+                    confidence = "High"
+                    points = 40
+                    proof_of_concept = "Unauthorized object access returned sensitive object properties in 200 OK body"
+                else:
+                    matched = True
+                    has_proof = False
+                    finding_status = "Suspected"
+                    confidence = "Low"
+                    points = 10
+                    proof_of_concept = "Object ID path queried without confirmed sensitive object disclosure"
+
+        # BOLA / IDOR Proof Verification (fallback)
         if not matched and resp_status in [200, 201]:
-            has_bola_pattern = any(re.search(r, target_string) for r in self.REGEX_RULES["BOLA_IDOR"])
+            has_bola_pattern = any(re.search(r, combined_probe_text) for r in self.REGEX_RULES["BOLA_IDOR"])
             auth_header = telemetry_data.get("request_headers", {}).get("Authorization", "")
-            has_sensitive_data = any(re.search(pat, resp_body, re.I) for pat in [r"\"email\":", r"\"ssn\":", r"\"password\":", r"\"role\":", r"\"token\":"])
+            has_sensitive_data = any(re.search(pat, resp_body, re.I) for pat in [r"\"email\":", r"\"ssn\":", r"\"password\":", r"\"role\":", r"\"token\":", r"\"username\":"])
 
             if has_bola_pattern and (has_sensitive_data or not auth_header):
                 matched = True
