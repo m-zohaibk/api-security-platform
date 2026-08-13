@@ -1,0 +1,16 @@
+# BOLA / IDOR Testing Patterns
+/users/1
+/users/2
+/users/100
+/accounts/1
+/accounts/2
+/orders/1
+/orders/9999
+/profiles/0
+/profiles/1
+id=1
+id=2
+user_id=10
+account_id=20
+user_id=1
+user_id=2

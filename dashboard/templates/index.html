@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Start Inspection Scan - API Security Platform{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>API Telemetry & Anomaly Inspection</h1>
+    <p>Target live HTTP API endpoints for multi-layered structural and behavioral anomaly detection.</p>
+</div>
+
+<div class="card form-container">
+    <form action="{{ url_for('dashboard.start_scan') }}" method="POST">
+        <div class="form-group">
+            <label for="target_url">Target API Base URL</label>
+            <input type="url" id="target_url" name="target_url" placeholder="http://localhost:5001" required>
+        </div>
+
+        <div class="options-header">
+            <h3>Active Scan Inspection Modules</h3>
+        </div>
+
+        <div class="checkbox-grid">
+            <label class="checkbox-label">
+                <input type="checkbox" name="module_sqli" checked> Enable SQLi testing
+            </label>
+            <label class="checkbox-label">
+                <input type="checkbox" name="module_xss" checked> Enable XSS testing
+            </label>
+            <label class="checkbox-label">
+                <input type="checkbox" name="module_bola" checked> Enable BOLA testing
+            </label>
+            <label class="checkbox-label">
+                <input type="checkbox" name="module_auth" checked> Enable Auth testing
+            </label>
+            <label class="checkbox-label">
+                <input type="checkbox" name="module_cmd" checked> Enable Command Injection testing
+            </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Start Active Inspection Scan</button>
+    </form>
+</div>
+{% endblock %}

