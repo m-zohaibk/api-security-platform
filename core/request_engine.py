@@ -99,20 +99,99 @@ class RequestEngine:
                 "response_headers": {},
                 "error": f"TimeoutException: {str(exc)}"
             }
-        except httpx.RequestError as exc:
+        except Exception as exc:
             elapsed_time = time.time() - start_time
             logger.error(f"Request error for [{method_upper}] {url}: {exc}")
             return {
                 "method": method_upper,
                 "url": url,
                 "payload": payload_str,
-                "status_code": 500,
+                "status_code": 0,
                 "response_body": "",
                 "response_time": elapsed_time,
                 "response_size": 0,
                 "request_headers": req_headers,
                 "response_headers": {},
-                "error": f"RequestError: {str(exc)}"
+                "error": f"ConnectionError: {str(exc)}"
+            }
+
+    async def send_request_async(
+        self,
+        method: str,
+        url: str,
+        payload: Optional[str] = None,
+        custom_headers: Optional[Dict[str, str]] = None,
+        json_payload: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Asynchronously dispatches HTTP request using httpx.AsyncClient for high-throughput API testing.
+        """
+        method_upper = method.upper()
+        req_headers = self.default_headers.copy()
+        if custom_headers:
+            req_headers.update(custom_headers)
+
+        payload_str = payload or ""
+        params = None
+        data = None
+        json_data = None
+
+        if method_upper in ["GET", "DELETE"]:
+            if payload_str:
+                params = {"q": payload_str}
+        elif method_upper in ["POST", "PUT", "PATCH"]:
+            if json_payload:
+                json_data = json_payload
+            elif payload_str:
+                data = payload_str
+
+        start_time = time.time()
+
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=True) as client:
+                response = await client.request(
+                    method=method_upper,
+                    url=url,
+                    params=params,
+                    data=data,
+                    json=json_data,
+                    headers=req_headers
+                )
+
+                elapsed_time = time.time() - start_time
+                response_body = response.text
+                response_bytes = len(response.content)
+
+                result = {
+                    "method": method_upper,
+                    "url": str(response.url),
+                    "payload": payload_str,
+                    "status_code": response.status_code,
+                    "response_body": response_body,
+                    "response_time": elapsed_time,
+                    "response_size": response_bytes,
+                    "request_headers": req_headers,
+                    "response_headers": dict(response.headers),
+                    "error": None
+                }
+
+                logger.info(f"Async Request [{method_upper}] {url} -> {response.status_code} ({elapsed_time:.3f}s)")
+                return result
+
+        except Exception as exc:
+            elapsed_time = time.time() - start_time
+            logger.error(f"Async request error for [{method_upper}] {url}: {exc}")
+            return {
+                "method": method_upper,
+                "url": url,
+                "payload": payload_str,
+                "status_code": 0,
+                "response_body": "",
+                "response_time": elapsed_time,
+                "response_size": 0,
+                "request_headers": req_headers,
+                "response_headers": {},
+                "error": f"AsyncError: {str(exc)}"
             }
 
 

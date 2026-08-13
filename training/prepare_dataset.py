@@ -86,6 +86,49 @@ class DatasetPreparer:
 
         return records
 
+    def parse_csic_csv(self, csv_path: Path) -> List[Dict[str, Any]]:
+        """Parses HTTP request records from csic_database.csv file."""
+        records = []
+        if not csv_path.exists():
+            return records
+
+        logger.info(f"Parsing CSIC 2010 database CSV from {csv_path}...")
+        raw_df = pd.read_csv(csv_path, low_memory=False)
+
+        for _, row in raw_df.iterrows():
+            method = str(row.get("Method", "GET")).strip().upper()
+            if method not in ["GET", "POST", "PUT", "DELETE"]:
+                method = "GET"
+            
+            raw_url = str(row.get("URL", "/"))
+            url_path = raw_url.split(" ")[0] if " " in raw_url else raw_url
+            if not url_path.startswith("http"):
+                url_path = f"http://localhost:8080{url_path}"
+
+            payload = str(row.get("content", "")) if pd.notna(row.get("content")) else ""
+            if payload == "nan":
+                payload = ""
+
+            try:
+                label = int(row.get("classification", 0))
+            except (ValueError, TypeError):
+                label = 0
+
+            sample_req = {
+                "method": method,
+                "url": url_path,
+                "payload": payload,
+                "status_code": 0,
+                "response_size": 0,
+                "request_headers": {"User-Agent": str(row.get("User-Agent", ""))}
+            }
+
+            features = self.parser.extract_features(sample_req)
+            features["label"] = label
+            records.append(features)
+
+        return records
+
     def generate_synthetic_csic_fallback(self, num_samples: int = 1000) -> pd.DataFrame:
         """Generates representative baseline HTTP feature samples if raw files are absent."""
         logger.info("Raw CSIC dataset files not found. Generating baseline dataset samples...")
@@ -146,12 +189,16 @@ class DatasetPreparer:
         
         all_records = []
 
-        # Check for standard CSIC 2010 dataset files
+        # Check for standard CSIC 2010 dataset files (CSV or raw TXT)
+        csic_csv_file = self.raw_dir / "csic_database.csv"
         train_normal_file = self.raw_dir / "normalTrafficTraining.txt"
         test_normal_file = self.raw_dir / "normalTrafficTest.txt"
         test_attack_file = self.raw_dir / "anomalousTrafficTest.txt"
 
-        if train_normal_file.exists() or test_attack_file.exists():
+        if csic_csv_file.exists():
+            all_records.extend(self.parse_csic_csv(csic_csv_file))
+            df = pd.DataFrame(all_records)
+        elif train_normal_file.exists() or test_attack_file.exists():
             all_records.extend(self.parse_csic_raw_text(train_normal_file, label=0))
             all_records.extend(self.parse_csic_raw_text(test_normal_file, label=0))
             all_records.extend(self.parse_csic_raw_text(test_attack_file, label=1))
@@ -160,7 +207,9 @@ class DatasetPreparer:
             df = self.generate_synthetic_csic_fallback()
 
         # Clean data — handle missing values
-        df = df.dropna().drop_duplicates()
+        if "feature_vector" in df.columns:
+            df = df.drop(columns=["feature_vector"])
+        df = df.dropna().drop_duplicates(subset=self.FEATURE_COLUMNS + ["label"])
 
         # Split train (80%) and test (20%)
         train_df, test_df = train_test_split(df, test_size=0.20, random_state=42, stratify=df["label"])

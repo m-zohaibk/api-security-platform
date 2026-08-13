@@ -148,9 +148,9 @@ def main():
     if args.dashboard:
         logger.info("Launching Web Dashboard...")
         from dashboard.app import create_app
+        from config.settings import FLASK_PORT, FLASK_DEBUG
         app = create_app()
-        print(f"\n[+] Dashboard live on http://localhost:5000\n")
-        app.run(port=5000, debug=True)
+        app.run(port=FLASK_PORT, debug=FLASK_DEBUG)
 
     elif args.url:
         run_pipeline(args.url)

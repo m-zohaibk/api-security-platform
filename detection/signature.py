@@ -209,10 +209,30 @@ class SignatureDetector:
                     confidence = "Low"
                     points = 20
 
-            elif candidate_category in ["BOLA_IDOR", "Auth_Weakness"]:
-                if resp_status in [200, 201]:
+            elif candidate_category == "BOLA_IDOR":
+                # Real BOLA Verification Gate:
+                # High confidence if HTTP 200/201 returns sensitive user account properties
+                # or if object ID access succeeds without active authorization header
+                auth_header = telemetry_data.get("request_headers", {}).get("Authorization", "")
+                has_sensitive_data = any(re.search(pat, resp_body, re.I) for pat in [r"\"email\":", r"\"ssn\":", r"\"password\":", r"\"role\":"])
+                
+                if resp_status in [200, 201] and (has_sensitive_data or not auth_header):
+                    confidence = "High"
+                    points = 90
+                elif resp_status in [200, 201]:
                     confidence = "Medium"
-                    points = 60
+                    points = 50
+                else:
+                    confidence = "Low"
+                    points = 15
+
+            elif candidate_category == "Auth_Weakness":
+                # Real JWT / Auth Verification Gate:
+                # High confidence if unauthenticated/null/alg=none token accesses endpoint with HTTP 200
+                is_jwt_alg_none = bool(re.search(r"(?i)alg\s*:\s*\"?none\"?", target_string))
+                if resp_status in [200, 201] or is_jwt_alg_none:
+                    confidence = "High"
+                    points = 90
                 else:
                     confidence = "Low"
                     points = 20

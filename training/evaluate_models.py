@@ -68,15 +68,15 @@ class PlatformEvaluator:
                 feat_vec = [row[col] for col in self.ml_detector.FEATURE_KEYS if col in row]
                 feat_dict["feature_vector"] = feat_vec
 
-                is_attack = row.get("label", 0) == 1
+                payload_str = str(row.get("payload", "")) if "payload" in row and pd.notna(row["payload"]) else ""
                 sample_req = {
                     "method": "POST" if row.get("encoded_method") == 2 else "GET",
                     "url": "http://localhost/api/v1/resource",
-                    "payload": "' OR 1=1 --" if is_attack else "normal_payload",
-                    "status_code": 200,
-                    "response_size": 250 if is_attack else 100,
-                    "response_headers": {"Content-Type": "text/html" if is_attack else "application/json"},
-                    "response_body": "SQLAlchemyError: syntax error near OR <script>alert('xss')</script>" if is_attack else "{\"status\":\"ok\"}"
+                    "payload": payload_str,
+                    "status_code": int(row.get("status_code", 0)),
+                    "response_size": int(row.get("response_size", 0)),
+                    "request_headers": {},
+                    "response_headers": {}
                 }
 
                 # Layer 1

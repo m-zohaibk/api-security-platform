@@ -24,8 +24,14 @@ class EndpointDiscovery:
         "/health",
         "/status",
         "/users",
+        "/users/v1",
+        "/users/v1/login",
+        "/users/v1/register",
+        "/users/v1/debug",
+        "/users/v1/1",
         "/auth",
-        "/login"
+        "/login",
+        "/createdb"
     ]
 
     def __init__(self, base_url: str, timeout: float = 10.0, max_depth: int = 2):

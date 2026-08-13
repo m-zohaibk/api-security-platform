@@ -46,18 +46,16 @@ def train_isolation_forest():
     train_df = pd.read_csv(train_path)
     test_df = pd.read_csv(test_path)
 
-    X_train = train_df[FEATURE_COLUMNS].values
-    y_train = train_df["label"].values
+    # Methodologically correct unsupervised anomaly detection:
+    # Train Isolation Forest baseline strictly on normal HTTP traffic (label == 0)
+    normal_train_df = train_df[train_df["label"] == 0]
+    X_train_normal = normal_train_df[FEATURE_COLUMNS].values
 
     X_test = test_df[FEATURE_COLUMNS].values
     y_test = test_df["label"].values
 
-    # Train Isolation Forest model (contamination estimated based on anomaly ratio)
-    contamination_rate = float(np.mean(y_train == 1))
-    if contamination_rate == 0 or contamination_rate >= 0.5:
-        contamination_rate = 0.1
-
-    logger.info(f"Training IsolationForest (n_estimators=100, contamination={contamination_rate:.2f})...")
+    contamination_rate = 0.05
+    logger.info(f"Training IsolationForest on {len(X_train_normal)} normal baseline samples (contamination={contamination_rate})...")
     
     model = IsolationForest(
         n_estimators=100,
@@ -67,7 +65,7 @@ def train_isolation_forest():
         n_jobs=-1
     )
 
-    model.fit(X_train)
+    model.fit(X_train_normal)
 
     # Predictions: Isolation Forest returns -1 for anomalies, 1 for normal
     raw_preds = model.predict(X_test)
