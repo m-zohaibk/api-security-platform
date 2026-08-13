@@ -10166,3 +10166,29 @@
 2026-08-12 20:54:22 | INFO | httpx | HTTP Request: GET http://localhost:5000/finding/541?q=Bearer%20null "HTTP/1.1 200 OK"
 2026-08-12 20:54:22 | INFO | api-scanner | Request [GET] http://localhost:5000/finding/541 -> 200 (3.554s)
 2026-08-12 20:54:22 | INFO | api-scanner | Risk Evaluation [GET] http://localhost:5000/finding/541 -> Score: 47.63/100 (Medium)
+2026-08-13 10:59:17 | INFO | api-scanner | Database tables initialized successfully.
+2026-08-13 10:59:17 | INFO | api-scanner | Initializing Endpoint Discovery...
+2026-08-13 10:59:17 | INFO | api-scanner | Starting endpoint discovery on target: https://dribbble.com
+2026-08-13 10:59:19 | INFO | httpx | HTTP Request: GET https://dribbble.com "HTTP/1.1 202 Accepted"
+2026-08-13 10:59:20 | INFO | httpx | HTTP Request: GET https://dribbble.com/api "HTTP/1.1 301 Moved Permanently"
+2026-08-13 10:59:21 | INFO | httpx | HTTP Request: GET https://developer.dribbble.com/ "HTTP/1.1 200 OK"
+2026-08-13 10:59:22 | INFO | httpx | HTTP Request: GET https://dribbble.com/api/v1 "HTTP/1.1 404 Not Found"
+2026-08-13 10:59:22 | INFO | httpx | HTTP Request: GET https://dribbble.com/api/v2 "HTTP/1.1 404 Not Found"
+2026-08-13 10:59:23 | INFO | httpx | HTTP Request: GET https://dribbble.com/v1 "HTTP/1.1 404 Not Found"
+2026-08-13 10:59:23 | INFO | httpx | HTTP Request: GET https://dribbble.com/v2 "HTTP/1.1 404 Not Found"
+2026-08-13 10:59:23 | INFO | httpx | HTTP Request: GET https://dribbble.com/health "HTTP/1.1 404 Not Found"
+2026-08-13 10:59:24 | INFO | httpx | HTTP Request: GET https://dribbble.com/status "HTTP/1.1 404 Not Found"
+2026-08-13 10:59:24 | INFO | httpx | HTTP Request: GET https://dribbble.com/users "HTTP/1.1 404 Not Found"
+2026-08-13 10:59:25 | INFO | httpx | HTTP Request: GET https://dribbble.com/auth "HTTP/1.1 404 Not Found"
+2026-08-13 10:59:25 | INFO | httpx | HTTP Request: GET https://dribbble.com/login "HTTP/1.1 200 OK"
+2026-08-13 10:59:26 | INFO | api-scanner | Successfully loaded Isolation Forest model from C:\Users\rahim\api-security-platform\models\isolation_forest.pkl
+2026-08-13 10:59:28 | INFO | httpx | HTTP Request: GET https://dribbble.com "HTTP/1.1 202 Accepted"
+2026-08-13 10:59:28 | INFO | api-scanner | Request [GET] https://dribbble.com -> 202 (1.582s)
+2026-08-13 10:59:28 | INFO | api-scanner | Risk Evaluation [GET] https://dribbble.com -> Score: 26.8/100 (Low)
+2026-08-13 10:59:30 | INFO | httpx | HTTP Request: GET https://dribbble.com/api "HTTP/1.1 301 Moved Permanently"
+2026-08-13 10:59:30 | INFO | httpx | HTTP Request: GET https://developer.dribbble.com/ "HTTP/1.1 200 OK"
+2026-08-13 10:59:30 | INFO | api-scanner | Request [GET] https://dribbble.com/api -> 200 (2.221s)
+2026-08-13 10:59:30 | INFO | api-scanner | Risk Evaluation [GET] https://dribbble.com/api -> Score: 37.81/100 (Medium)
+2026-08-13 10:59:31 | INFO | httpx | HTTP Request: GET https://dribbble.com/login "HTTP/1.1 200 OK"
+2026-08-13 10:59:32 | INFO | api-scanner | Request [GET] https://dribbble.com/login -> 200 (1.541s)
+2026-08-13 10:59:32 | INFO | api-scanner | Risk Evaluation [GET] https://dribbble.com/login -> Score: 38.41/100 (Medium)

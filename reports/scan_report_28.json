@@ -1,0 +1,74 @@
+{
+  "platform": "API Security & Anomaly Platform",
+  "generated_at": "2026-08-13T06:21:55.284765Z",
+  "session_summary": {
+    "session_id": 28,
+    "target_url": "https://dribbble.com",
+    "scan_start_time": "2026-08-13 05:59:26.429970",
+    "overall_risk_score": 34.34,
+    "overall_severity": "Medium",
+    "total_endpoints_found": 3,
+    "total_vulnerabilities_found": 2
+  },
+  "discovered_endpoints": [
+    {
+      "url": "https://dribbble.com",
+      "method": "GET"
+    },
+    {
+      "url": "https://dribbble.com/api",
+      "method": "GET"
+    },
+    {
+      "url": "https://dribbble.com/login",
+      "method": "GET"
+    }
+  ],
+  "findings_detail": [
+    {
+      "id": 2122,
+      "url": "https://dribbble.com",
+      "attack_type": "None",
+      "severity": "Low",
+      "risk_score": 26.8,
+      "signature_triggered": "HTTP 202 WAF Block / Asynchronous 0-byte filter",
+      "ml_score": 23.24,
+      "lstm_score": 0.0,
+      "autoencoder_score": 20.0,
+      "recommendation": "Baseline telemetry parameters normal. Maintain routine security monitoring and header hardening.",
+      "response_status": 202,
+      "response_size": 0,
+      "response_time": 1.5822596549987793
+    },
+    {
+      "id": 2123,
+      "url": "https://dribbble.com/api",
+      "attack_type": "Security_Misconfiguration",
+      "severity": "Medium",
+      "risk_score": 37.81,
+      "signature_triggered": "Missing headers: Content-Security-Policy, X-Content-Type-Options, X-Frame-Options, Strict-Transport-Security",
+      "ml_score": 23.05,
+      "lstm_score": 0.0,
+      "autoencoder_score": 20.0,
+      "recommendation": "Elevated structural anomaly or header misconfiguration detected. Audit API endpoint input parameters.",
+      "response_status": 200,
+      "response_size": 2349,
+      "response_time": 2.2213637828826904
+    },
+    {
+      "id": 2124,
+      "url": "https://dribbble.com/login",
+      "attack_type": "Security_Misconfiguration",
+      "severity": "Medium",
+      "risk_score": 38.41,
+      "signature_triggered": "Missing headers: Content-Security-Policy",
+      "ml_score": 24.13,
+      "lstm_score": 0.0,
+      "autoencoder_score": 20.0,
+      "recommendation": "Elevated structural anomaly or header misconfiguration detected. Audit API endpoint input parameters.",
+      "response_status": 200,
+      "response_size": 47712,
+      "response_time": 1.5407438278198242
+    }
+  ]
+}
