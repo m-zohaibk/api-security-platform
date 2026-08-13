@@ -1,3 +1,6 @@
+import re
+import json
+import yaml
 from typing import List, Dict, Any, Set
 from urllib.parse import urljoin, urlparse
 import httpx
@@ -61,14 +64,28 @@ class EndpointDiscovery:
         parsed = urlparse(joined)
         return f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
 
+    OPENAPI_SPEC_PATHS = [
+        "/openapi.json",
+        "/openapi.yaml",
+        "/openapi3.yml",
+        "/openapi3.yaml",
+        "/swagger.json",
+        "/swagger.yaml",
+        "/v2/api-docs",
+        "/api-docs",
+        "/api/openapi.json",
+        "/api/swagger.json"
+    ]
+
     def discover(self) -> List[Dict[str, str]]:
         """
-        Executes endpoint discovery by crawling HTML pages and probing common API paths.
-        Returns a list of dicts with 'url' and 'method'.
+        Executes endpoint discovery by parsing OpenAPI specs, crawling HTML pages,
+        and probing common API paths. Returns a list of dicts with 'url' and 'method'.
         """
         logger.info(f"Starting endpoint discovery on target: {self.base_url}")
         print(f"\n[+] Starting Endpoint Discovery for: {self.base_url}")
 
+        self._discover_openapi_specs()
         self._crawl_page(self.base_url, depth=0)
         self._probe_common_paths()
 
@@ -88,6 +105,41 @@ class EndpointDiscovery:
             print(f"  {idx}. [{ep['method']}] {ep['url']}")
 
         return self.discovered_endpoints
+
+    def _discover_openapi_specs(self) -> None:
+        """Attempts to discover and parse OpenAPI / Swagger specifications."""
+        import json
+        import yaml
+
+        with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
+            for spec_path in self.OPENAPI_SPEC_PATHS:
+                target_url = f"{self.base_url}{spec_path}"
+                try:
+                    resp = client.get(target_url)
+                    if resp.status_code == 200 and len(resp.text.strip()) > 10:
+                        spec_data = None
+                        try:
+                            spec_data = resp.json()
+                        except Exception:
+                            try:
+                                spec_data = yaml.safe_load(resp.text)
+                            except Exception:
+                                spec_data = None
+
+                        if isinstance(spec_data, dict) and "paths" in spec_data:
+                            logger.info(f"Discovered OpenAPI spec at: {target_url}")
+                            for api_path, methods in spec_data["paths"].items():
+                                # Replace parameterized path variables like {username} with test values
+                                clean_path = re.sub(r"\{[^}]+\}", "admin", api_path)
+                                full_url = f"{self.base_url}{clean_path}"
+                                for http_method in methods.keys():
+                                    if http_method.upper() in ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"]:
+                                        self.discovered_endpoints.append({
+                                            "url": full_url,
+                                            "method": http_method.upper()
+                                        })
+                except Exception as exc:
+                    logger.debug(f"OpenAPI probe exception at {target_url}: {exc}")
 
     def _crawl_page(self, current_url: str, depth: int) -> None:
         if depth > self.max_depth or current_url in self.visited_urls:
