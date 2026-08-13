@@ -13,3 +13,19 @@ def test_dashboard_routes():
     response_history = client.get("/history")
     assert response_history.status_code == 200
     assert b"Inspection Scan History" in response_history.data
+
+def test_dashboard_api_routes():
+    app = create_app()
+    app.config["TESTING"] = True
+    client = app.test_client()
+
+    # List sessions API
+    res = client.get("/api/sessions")
+    assert res.status_code == 200
+    json_data = res.get_json()
+    assert json_data["status"] == "success"
+    assert isinstance(json_data["sessions"], list)
+
+    # API Scan error on missing target_url
+    bad_scan = client.post("/api/scan", json={})
+    assert bad_scan.status_code == 400
