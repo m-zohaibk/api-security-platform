@@ -116,6 +116,27 @@ def save_finding(
     finally:
         db.close()
 
+def complete_scan_session(
+    session_id: int,
+    overall_risk_score: float,
+    overall_severity: str,
+    total_vulnerabilities: int
+) -> Optional[ScanSession]:
+    db = SessionLocal()
+    try:
+        session_obj = db.query(ScanSession).filter(ScanSession.id == session_id).first()
+        if session_obj:
+            session_obj.overall_risk_score = overall_risk_score
+            session_obj.overall_severity = overall_severity
+            session_obj.total_vulnerabilities_found = total_vulnerabilities
+            session_obj.scan_end_time = datetime.utcnow()
+            db.commit()
+            db.refresh(session_obj)
+            return session_obj
+        return None
+    finally:
+        db.close()
+
 def get_all_sessions() -> List[ScanSession]:
     db = SessionLocal()
     try:

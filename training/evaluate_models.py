@@ -121,14 +121,79 @@ class PlatformEvaluator:
         l3_metrics = calc_metrics(y_true, y_l3)
         comb_metrics = calc_metrics(y_true, y_comb)
 
-        owasp_coverage = {
-            cat: {
-                "detected": True,
-                "correct_count": 10,
-                "missed_count": 1,
-                "fp_count": 0
-            } for cat in self.OWASP_CATEGORIES
+        # Real dynamic OWASP API Top 10 evaluation test suite
+        owasp_test_cases = {
+            "API1: BOLA / IDOR": [
+                {"method": "GET", "url": "http://localhost/users/1", "payload": "id=102", "headers": {"Authorization": "Bearer user1"}, "status_code": 200, "response_body": '{"id": 102, "email": "other@user.com"}'},
+                {"method": "GET", "url": "http://localhost/account/9999", "payload": "", "headers": {}, "status_code": 200, "response_body": '{"ssn": "123-45-6789"}'}
+            ],
+            "API2: Broken Authentication": [
+                {"method": "GET", "url": "http://localhost/api/admin", "payload": "Bearer null", "headers": {"Authorization": "Bearer null"}, "status_code": 200, "response_body": "admin panel"},
+                {"method": "POST", "url": "http://localhost/api/login", "payload": "' OR 1=1 --", "headers": {}, "status_code": 200, "response_body": "welcome admin"}
+            ],
+            "API3: Broken Object Property Authorization": [
+                {"method": "PUT", "url": "http://localhost/users/1", "payload": '{"is_admin": true, "role": "superuser"}', "headers": {}, "status_code": 200, "response_body": "user updated"}
+            ],
+            "API4: Unrestricted Resource Consumption": [
+                {"method": "GET", "url": "http://localhost/api/v1/search", "payload": "limit=1000000&page=1", "headers": {}, "status_code": 200, "response_body": "[" + "a"*50000 + "]"}
+            ],
+            "API5: Broken Function Level Authorization": [
+                {"method": "DELETE", "url": "http://localhost/api/v1/users/admin", "payload": "", "headers": {"User-Role": "guest"}, "status_code": 200, "response_body": "deleted"}
+            ],
+            "API6: Unrestricted Access to Business Flows": [
+                {"method": "POST", "url": "http://localhost/api/v1/coupon/redeem", "payload": "code=PROMO100" * 50, "headers": {}, "status_code": 200, "response_body": "discount applied"}
+            ],
+            "API7: Server Side Request Forgery": [
+                {"method": "POST", "url": "http://localhost/api/v1/fetch", "payload": "url=http://169.254.169.254/latest/meta-data/", "headers": {}, "status_code": 200, "response_body": "ami-id: 12345"}
+            ],
+            "API8: Security Misconfiguration": [
+                {"method": "GET", "url": "http://localhost/api/v1/debug", "payload": "", "headers": {}, "status_code": 500, "response_body": "Traceback (most recent call last):\nFile 'app.py', line 12\nZeroDivisionError"}
+            ],
+            "API9: Improper Inventory Management": [
+                {"method": "GET", "url": "http://localhost/v1/deprecated/users", "payload": "", "headers": {}, "status_code": 200, "response_body": "legacy debug endpoint active"}
+            ],
+            "API10: Unsafe Consumption of APIs": [
+                {"method": "POST", "url": "http://localhost/webhook", "payload": "<!DOCTYPE foo [<!ENTITY xxe SYSTEM 'file:///etc/passwd'>]>", "headers": {}, "status_code": 200, "response_body": "root:x:0:0"}
+            ]
         }
+
+        owasp_coverage = {}
+        total_detected_cats = 0
+        for cat, samples in owasp_test_cases.items():
+            correct = 0
+            missed = 0
+            fp = 0
+            for sample in samples:
+                req_data = {
+                    "method": sample["method"],
+                    "url": sample["url"],
+                    "payload": sample["payload"],
+                    "status_code": sample.get("status_code", 200),
+                    "response_size": len(sample.get("response_body", "")),
+                    "response_headers": sample.get("headers", {}),
+                    "response_body": sample.get("response_body", "")
+                }
+                feat_dict = self.parser.extract_features(req_data)
+                sig_res = self.signature_detector.analyze(req_data)
+                ml_res = self.ml_detector.predict(feat_dict)
+                dl_res = self.dl_detector.analyze(sample["payload"], feat_dict)
+                risk_res = self.risk_scorer.calculate_risk(sig_res, ml_res, dl_res, sample["url"], sample["method"])
+                
+                if risk_res["total_score"] >= 30.0 or sig_res["matched"]:
+                    correct += 1
+                else:
+                    missed += 1
+
+            is_detected = correct > 0
+            if is_detected:
+                total_detected_cats += 1
+
+            owasp_coverage[cat] = {
+                "detected": is_detected,
+                "correct_count": correct,
+                "missed_count": missed,
+                "fp_count": fp
+            }
 
         results_payload = {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -157,7 +222,7 @@ class PlatformEvaluator:
         print(f" COMBINED PIPELINE TOTAL : Precision={comb_metrics['precision']}%, Recall={comb_metrics['recall']}%, F1={comb_metrics['f1_score']}%")
         print(f" False Positive Rate     : {comb_metrics['false_positive_rate']}%")
         print(f" Avg Time Per Endpoint   : {avg_scan_time_per_ep if 'avg_scan_time_per_ep' in locals() else 0.05} sec")
-        print(f" OWASP Top 10 Coverage   : 10 / 10 Categories Verified")
+        print(f" OWASP Top 10 Coverage   : {total_detected_cats} / 10 Categories Verified")
         print(f" Saved Evaluation To     : {out_file}")
         print("="*65 + "\n")
 

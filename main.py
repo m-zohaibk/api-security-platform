@@ -13,7 +13,7 @@ from detection.signature import SignatureDetector
 from detection.ml_model import MLAnomalyDetector
 from detection.deep_learning import DeepLearningDetector
 from detection.risk_scorer import RiskScorer
-from database.db import init_db, SessionLocal, save_scan_session, save_endpoint, save_finding
+from database.db import init_db, SessionLocal, save_scan_session, save_endpoint, save_finding, complete_scan_session
 from database.models import ScanSession, Endpoint, Finding, Report
 
 def run_pipeline(target_url: str):
@@ -111,17 +111,13 @@ def run_pipeline(target_url: str):
                 response_time=req_data.get("response_time", 0.0)
             )
 
-        db = SessionLocal()
-        try:
-            db_sess = db.query(ScanSession).filter(ScanSession.id == session_obj.id).first()
-            if db_sess:
-                avg_score = round(sum(total_scores) / len(total_scores), 2) if total_scores else 0.0
-                db_sess.overall_risk_score = avg_score
-                db_sess.overall_severity = RiskScorer.classify_severity(avg_score)
-                db_sess.total_vulnerabilities_found = vulnerability_count
-                db.commit()
-        finally:
-            db.close()
+        avg_score = round(sum(total_scores) / len(total_scores), 2) if total_scores else 0.0
+        complete_scan_session(
+            session_id=session_obj.id,
+            overall_risk_score=avg_score,
+            overall_severity=RiskScorer.classify_severity(avg_score),
+            total_vulnerabilities=vulnerability_count
+        )
 
         print("\n" + "="*65)
         print(" SCAN PIPELINE COMPLETED SUCCESSFULLY")

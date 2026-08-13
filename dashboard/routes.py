@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sqlalchemy.orm import joinedload
 from database.db import (
-    save_scan_session, save_endpoint, save_finding,
+    save_scan_session, save_endpoint, save_finding, complete_scan_session,
     get_all_sessions, get_session_findings, get_finding_by_id, delete_session, SessionLocal
 )
 from database.models import ScanSession, Finding, Endpoint
@@ -130,18 +130,14 @@ def start_scan():
                 response_time=req_data.get("response_time", 0.0)
             )
 
-    # Update session overall totals
-    db = SessionLocal()
-    try:
-        db_sess = db.query(ScanSession).filter(ScanSession.id == session_obj.id).first()
-        if db_sess:
-            avg_score = round(sum(total_risk_scores) / len(total_risk_scores), 2) if total_risk_scores else 0.0
-            db_sess.overall_risk_score = avg_score
-            db_sess.overall_severity = RiskScorer.classify_severity(avg_score)
-            db_sess.total_vulnerabilities_found = vulnerability_count
-            db.commit()
-    finally:
-        db.close()
+    # Update session overall totals and end time
+    avg_score = round(sum(total_risk_scores) / len(total_risk_scores), 2) if total_risk_scores else 0.0
+    complete_scan_session(
+        session_id=session_obj.id,
+        overall_risk_score=avg_score,
+        overall_severity=RiskScorer.classify_severity(avg_score),
+        total_vulnerabilities=vulnerability_count
+    )
 
     return redirect(url_for("dashboard.results", session_id=session_obj.id))
 
