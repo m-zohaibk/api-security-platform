@@ -27,6 +27,22 @@ class EndpointDiscovery:
         "/health",
         "/status",
         "/users",
+        "/auth",
+        "/login",
+        "/search",
+        "/products",
+        "/cart",
+        "/admin",
+        "/signup",
+        "/register",
+        "/profile",
+        "/account",
+        "/dashboard",
+        "/comments",
+        "/articles",
+        "/posts",
+        "/categories",
+        "/tags",
         "/users/v1",
         "/users/v1/login",
         "/users/v1/register",
@@ -40,12 +56,10 @@ class EndpointDiscovery:
         "/books",
         "/books/v1",
         "/books/v1/book1",
-        "/auth",
-        "/login",
         "/createdb"
     ]
 
-    def __init__(self, base_url: str, timeout: float = 10.0, max_depth: int = 2):
+    def __init__(self, base_url: str, timeout: float = 10.0, max_depth: int = 3):
         self.base_url = base_url.rstrip("/")
         parsed = urlparse(self.base_url)
         self.domain = parsed.netloc
@@ -59,10 +73,11 @@ class EndpointDiscovery:
         parsed = urlparse(url)
         return not parsed.netloc or parsed.netloc == self.domain
 
-    def normalize_url(self, url: str) -> str:
-        joined = urljoin(self.base_url, url)
+    def normalize_url(self, url: str, base: str = "") -> str:
+        joined = urljoin(base or self.base_url, url)
         parsed = urlparse(joined)
-        return f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
+        query_part = f"?{parsed.query}" if parsed.query else ""
+        return f"{parsed.scheme}://{parsed.netloc}{parsed.path}{query_part}"
 
     OPENAPI_SPEC_PATHS = [
         "/openapi.json",
@@ -162,9 +177,9 @@ class EndpointDiscovery:
 
                     # Extract links (<a> tags)
                     for a_tag in soup.find_all("a", href=True):
-                        href = a_tag["href"]
-                        if href and not href.startswith(("#", "javascript:", "mailto:")):
-                            full_url = self.normalize_url(href)
+                        href = a_tag["href"].strip()
+                        if href and not href.startswith(("#", "javascript:", "mailto:", "tel:")):
+                            full_url = self.normalize_url(href, base=current_url)
                             if self.is_same_domain(full_url):
                                 self.discovered_endpoints.append({"url": full_url, "method": "GET"})
                                 if depth < self.max_depth:
@@ -172,9 +187,9 @@ class EndpointDiscovery:
 
                     # Extract forms (<form> tags)
                     for form in soup.find_all("form"):
-                        action = form.get("action", "")
+                        action = form.get("action", "").strip()
                         method = form.get("method", "GET").upper()
-                        form_url = self.normalize_url(action) if action else current_url
+                        form_url = self.normalize_url(action, base=current_url) if action else current_url
                         if self.is_same_domain(form_url):
                             self.discovered_endpoints.append({"url": form_url, "method": method})
 

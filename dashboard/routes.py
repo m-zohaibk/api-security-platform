@@ -119,16 +119,29 @@ def start_scan():
             # Dispatch HTTP Request with payload
             req_data = request_engine.send_request(test_method, test_url, payload=payload_str, custom_headers=custom_headers)
 
-            # Skip if response is identical to baseline
+            # Baseline differential check — only skip if response is identical AND contains no error indicators
             current_size = req_data.get("response_size", 0)
             current_status = req_data.get("status_code", 200)
+            response_body = req_data.get("response_body", "")
+
+            error_indicators = [
+                "error", "sql", "syntax", "warning",
+                "exception", "invalid", "undefined",
+                "mysql", "ora-", "pg::", "sqlite", "traceback"
+            ]
+            has_error = any(ind in response_body.lower() for ind in error_indicators)
 
             if (current_size == baseline_size 
                 and current_status == baseline_status
                 and current_size > 0
+                and not has_error
                 and test_item["type"] not in ["Baseline_Inspection"]):
                 req_data["payload_had_effect"] = False
             else:
+                req_data["payload_had_effect"] = True
+
+            # Security misconfiguration is always valid regardless of baseline comparison
+            if test_item["type"] == "Baseline_Inspection":
                 req_data["payload_had_effect"] = True
 
             features = response_parser.extract_features(req_data)
@@ -435,6 +448,30 @@ def api_trigger_scan():
             custom_headers = test_item.get("headers", None)
 
             req_data = request_engine.send_request(test_method, test_url, payload=payload_str, custom_headers=custom_headers)
+
+            current_size = req_data.get("response_size", 0)
+            current_status = req_data.get("status_code", 200)
+            response_body = req_data.get("response_body", "")
+
+            error_indicators = [
+                "error", "sql", "syntax", "warning",
+                "exception", "invalid", "undefined",
+                "mysql", "ora-", "pg::", "sqlite", "traceback"
+            ]
+            has_error = any(ind in response_body.lower() for ind in error_indicators)
+
+            if (current_size == baseline_size 
+                and current_status == baseline_status
+                and current_size > 0
+                and not has_error
+                and test_item["type"] not in ["Baseline_Inspection"]):
+                req_data["payload_had_effect"] = False
+            else:
+                req_data["payload_had_effect"] = True
+
+            if test_item["type"] == "Baseline_Inspection":
+                req_data["payload_had_effect"] = True
+
             features = response_parser.extract_features(req_data)
 
             sig_res = signature_detector.analyze(req_data, baseline_telemetry=baseline_telemetry)
