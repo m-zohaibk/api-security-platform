@@ -40,15 +40,26 @@ def test_risk_scorer_layer_caps_and_boundaries():
     assert RiskScorer.classify_severity(84.0) == "HIGH"
     assert RiskScorer.classify_severity(85.0) == "CRITICAL"
 
-def test_proof_multiplier_zero_when_no_proof():
+def test_ml_dl_independent_contribution_and_zero_baseline():
     scorer = RiskScorer()
-    mock_sig = {"matched": True, "has_proof": False, "attack_type": "SQL_Injection", "points": 40.0}
+    
+    # 1. Clean request with zero signature/ML/DL points -> Total score 0.0
+    clean_sig = {"matched": False, "has_proof": False, "attack_type": "None", "points": 0.0}
+    clean_ml = {"is_anomaly": False, "points": 0.0}
+    clean_dl = {"lstm_points": 0.0, "autoencoder_points": 0.0}
+
+    res_clean = scorer.calculate_risk(clean_sig, clean_ml, clean_dl, "http://localhost/api", "GET")
+    assert res_clean["total_score"] == 0.0
+    assert res_clean["severity"] == "NONE"
+    assert res_clean["is_vulnerable"] is False
+
+    # 2. Signature has no proof (sig_points=0), but ML + DL detect anomalies -> Score = 12.5 + 7.5 + 10 = 30.0
+    mock_sig_no_proof = {"matched": False, "has_proof": False, "attack_type": "SQL_Injection", "points": 40.0}
     mock_ml = {"is_anomaly": True, "points": 12.5}
     mock_dl = {"lstm_points": 7.5, "autoencoder_points": 10.0}
 
-    # Total raw score = 70, but has_proof = False -> Proof_Multiplier = 0.0 -> Score = 0.0
-    res = scorer.calculate_risk(mock_sig, mock_ml, mock_dl, "http://localhost/api", "GET")
-    assert res["total_score"] == 0.0
-    assert res["severity"] == "NONE"
-    assert res["is_vulnerable"] is False
+    res_anom = scorer.calculate_risk(mock_sig_no_proof, mock_ml, mock_dl, "http://localhost/api", "GET")
+    assert res_anom["total_score"] == 30.0
+    assert res_anom["severity"] == "MEDIUM"
+    assert res_anom["is_vulnerable"] is True
 

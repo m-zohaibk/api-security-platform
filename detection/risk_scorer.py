@@ -124,34 +124,29 @@ class RiskScorer:
                 "recommendation": self.SEVERITY_RECOMMENDATIONS["Low"]
             }
 
-        # Section 4: Layer Point Calculations & Proof Multiplier
-        sig_points = min(float(signature_result.get("points", 0.0)), self.MAX_SIG_POINTS)
+        # Section 4: Layer Point Calculations
+        # ML and Deep Learning always contribute their points based on telemetry anomaly detection
         ml_points = min(float(ml_result.get("points", 0.0)), self.MAX_ML_POINTS)
         lstm_points = min(float(dl_result.get("lstm_points", 0.0)), self.MAX_LSTM_POINTS)
         ae_points = min(float(dl_result.get("autoencoder_points", 0.0)), self.MAX_AE_POINTS)
 
-        raw_ml_score = sig_points + ml_points + lstm_points + ae_points
-        raw_total = min(self.MAX_TOTAL_POINTS, raw_ml_score)
+        # Signature proof affects signature points
+        has_proof = signature_result.get("has_proof", False) or signature_result.get("matched", False) or signature_result.get("is_vulnerable", False)
+        sig_points_raw = float(signature_result.get("points", 0.0))
+        sig_points = min(sig_points_raw, self.MAX_SIG_POINTS) if has_proof else 0.0
 
-        # Vulnerability Proof Multiplier (Section 4)
-        has_proof = signature_result.get("has_proof", False)
-        payload_had_effect = kwargs.get("payload_had_effect", True)
-
-        if has_proof:
-            proof_multiplier = 1.0
-        elif not payload_had_effect:
-            proof_multiplier = 0.0  # Payload had zero response differential effect
-        else:
-            proof_multiplier = 0.0  # No response proof criteria met
-
-        final_risk_score = round(raw_total * proof_multiplier, 2)
+        # Calculate combined total score
+        proof_multiplier = 1.0 if has_proof else 0.0
+        raw_total = sig_points + ml_points + lstm_points + ae_points
+        final_risk_score = round(min(self.MAX_TOTAL_POINTS, raw_total), 2)
         severity = self.classify_severity(final_risk_score)
 
-        is_vulnerable = has_proof and final_risk_score > 0.0
-        finding_status = signature_result.get("finding_status", "Informational")
-        if is_vulnerable:
+        is_vulnerable = has_proof or final_risk_score >= 30.0
+        if has_proof:
             finding_status = "Confirmed"
-        elif final_risk_score == 0.0:
+        elif final_risk_score > 0.0:
+            finding_status = "Suspected"
+        else:
             finding_status = "Informational"
 
         rec_key = severity.capitalize() if severity in ["LOW", "MEDIUM", "HIGH", "CRITICAL"] else "Low"
@@ -160,7 +155,12 @@ class RiskScorer:
 
         proof_poc = signature_result.get("proof_of_concept", "")
         if not proof_poc:
-            proof_poc = "Vulnerability proof verified" if is_vulnerable else "No vulnerability proof criteria met"
+            if has_proof:
+                proof_poc = "Vulnerability signature verified with active response indicators"
+            elif final_risk_score > 0.0:
+                proof_poc = f"Multi-layer anomaly score ({final_risk_score}/100) triggered by ML/DL telemetry models"
+            else:
+                proof_poc = "No vulnerability or anomaly criteria met"
 
         result_summary = {
             "endpoint": endpoint_url,

@@ -161,7 +161,12 @@ def get_all_sessions() -> List[ScanSession]:
 def get_session_findings(session_id: int) -> List[Finding]:
     db = SessionLocal()
     try:
-        return db.query(Finding).options(joinedload(Finding.endpoint)).filter(Finding.session_id == session_id).all()
+        return db.query(Finding).options(
+            joinedload(Finding.endpoint)
+        ).filter(
+            Finding.session_id == session_id,
+            Finding.risk_score > 0
+        ).all()
     finally:
         db.close()
 

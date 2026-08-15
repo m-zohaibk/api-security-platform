@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-13 13:32:08",
+  "timestamp": "2026-08-15 23:45:48",
   "layer_1_signature": {
     "precision": 66.56,
     "recall": 100.0,
@@ -19,13 +19,13 @@
     "false_positive_rate": 2.46
   },
   "combined_pipeline": {
-    "precision": 88.19,
-    "recall": 19.6,
-    "f1_score": 32.07,
+    "precision": 88.32,
+    "recall": 19.83,
+    "f1_score": 32.39,
     "false_positive_rate": 5.22
   },
   "performance_metrics": {
-    "avg_scan_time_per_endpoint_sec": 0.006,
+    "avg_scan_time_per_endpoint_sec": 0.0056,
     "dashboard_load_time_sec": 0.45
   },
   "owasp_api_top_10_coverage": {

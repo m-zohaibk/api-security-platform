@@ -43,6 +43,7 @@ class EndpointDiscovery:
         "/posts",
         "/categories",
         "/tags",
+        # VAmPI specific paths
         "/users/v1",
         "/users/v1/login",
         "/users/v1/register",
@@ -53,10 +54,22 @@ class EndpointDiscovery:
         "/users/v1/me",
         "/users/v1/1",
         "/users/v1/2",
+        "/users/v1/3",
         "/books",
         "/books/v1",
+        "/books/v1/1",
         "/books/v1/book1",
-        "/createdb"
+        "/createdb",
+        # OWASP Juice Shop paths
+        "/rest/user/login",
+        "/rest/products/search",
+        "/api/Users",
+        "/api/Feedbacks",
+        # General API patterns
+        "/api/v1/users",
+        "/api/v1/admin",
+        "/api/v1/login",
+        "/api/v1/register"
     ]
 
     def __init__(self, base_url: str, timeout: float = 10.0, max_depth: int = 3):

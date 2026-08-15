@@ -54,7 +54,10 @@ def run_pipeline(target_url: str):
             {"type": "Cross_Site_Scripting", "payload": "<script>alert('xss')</script>", "method": "POST"},
             {"type": "Command_Injection", "payload": "; cat /etc/passwd", "method": "GET"},
             {"type": "Broken_Authentication", "payload": "", "method": "GET", "headers": {"Authorization": "Bearer null"}},
-            {"type": "BOLA_IDOR", "payload": "", "method": "GET", "path_suffix": "/1"},
+            {"type": "BOLA_IDOR", "payload": "id=1", "method": "GET", "path_suffix": "/users/v1/1"},
+            {"type": "BOLA_IDOR", "payload": "id=2", "method": "GET", "path_suffix": "/users/v1/2"},
+            {"type": "BOLA_IDOR", "payload": "id=3", "method": "GET", "path_suffix": "/users/v1/3"},
+            {"type": "BOLA_IDOR", "payload": "id=999", "method": "GET", "path_suffix": "/users/v1/999"},
             {"type": "Baseline_Inspection", "payload": "", "method": "GET"}
         ]
 
@@ -148,23 +151,24 @@ def run_pipeline(target_url: str):
                 if sig_res.get("is_vulnerable") or score > 0.0:
                     vulnerability_count += 1
 
-                save_finding(
-                    session_id=session_obj.id,
-                    endpoint_id=ep_obj.id,
-                    attack_type=attack_name,
-                    severity=severity,
-                    risk_score=score,
-                    finding_status=risk_summary.get("finding_status", "Informational"),
-                    signature_triggered=sig_res.get("proof_of_concept") or sig_res.get("pattern_matched", ""),
-                    ml_score=ml_res.get("points", 0.0),
-                    lstm_score=dl_res.get("lstm_points", 0.0),
-                    autoencoder_score=dl_res.get("autoencoder_points", 0.0),
-                    recommendation=risk_summary.get("recommendation", ""),
-                    request_payload=payload_str,
-                    response_status=req_data.get("status_code", 200),
-                    response_size=req_data.get("response_size", 0),
-                    response_time=req_data.get("response_time", 0.0)
-                )
+                if score > 0 or sig_res.get("is_vulnerable") or sig_res.get("matched"):
+                    save_finding(
+                        session_id=session_obj.id,
+                        endpoint_id=ep_obj.id,
+                        attack_type=attack_name,
+                        severity=severity,
+                        risk_score=score,
+                        finding_status=risk_summary.get("finding_status", "Informational"),
+                        signature_triggered=sig_res.get("proof_of_concept") or sig_res.get("pattern_matched", ""),
+                        ml_score=ml_res.get("points", 0.0),
+                        lstm_score=dl_res.get("lstm_points", 0.0),
+                        autoencoder_score=dl_res.get("autoencoder_points", 0.0),
+                        recommendation=risk_summary.get("recommendation", ""),
+                        request_payload=payload_str,
+                        response_status=req_data.get("status_code", 200),
+                        response_size=req_data.get("response_size", 0),
+                        response_time=req_data.get("response_time", 0.0)
+                    )
 
         overall_score = round(max(total_scores), 2) if total_scores else 0.0
         complete_scan_session(

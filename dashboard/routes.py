@@ -20,6 +20,10 @@ from detection.risk_scorer import RiskScorer
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
+@dashboard_bp.context_processor
+def inject_recent_sessions():
+    return dict(recent_sessions=get_all_sessions()[:5])
+
 @dashboard_bp.route("/")
 def index():
     recent_sessions = get_all_sessions()[:5]
@@ -78,7 +82,13 @@ def start_scan():
     if module_auth:
         active_test_queue.append({"type": "Broken_Authentication", "payload": "", "method": "GET", "headers": {"Authorization": "Bearer null"}})
     if module_bola:
-        active_test_queue.append({"type": "BOLA_IDOR", "payload": "", "method": "GET", "path_suffix": "/1"})
+        for uid in [1, 2, 3, 999]:
+            active_test_queue.append({
+                "type": "BOLA_IDOR",
+                "payload": f"id={uid}",
+                "method": "GET",
+                "path_suffix": f"/users/v1/{uid}"
+            })
 
     # Fallback to standard baseline if no module selected
     if not active_test_queue:
@@ -170,23 +180,25 @@ def start_scan():
             if sig_res.get("is_vulnerable") or score > 0.0:
                 vulnerability_count += 1
 
-            save_finding(
-                session_id=session_obj.id,
-                endpoint_id=ep_obj.id,
-                attack_type=attack_name,
-                severity=severity,
-                risk_score=score,
-                finding_status=risk_summary.get("finding_status", "Informational"),
-                signature_triggered=sig_res.get("proof_of_concept") or sig_res.get("pattern_matched", ""),
-                ml_score=ml_res.get("points", 0.0),
-                lstm_score=dl_res.get("lstm_points", 0.0),
-                autoencoder_score=dl_res.get("autoencoder_points", 0.0),
-                recommendation=risk_summary.get("recommendation", ""),
-                request_payload=payload_str,
-                response_status=req_data.get("status_code", 200),
-                response_size=req_data.get("response_size", 0),
-                response_time=req_data.get("response_time", 0.0)
-            )
+            # Only save meaningful findings with risk score or triggered signatures
+            if score > 0 or sig_res.get("is_vulnerable") or sig_res.get("matched"):
+                save_finding(
+                    session_id=session_obj.id,
+                    endpoint_id=ep_obj.id,
+                    attack_type=attack_name,
+                    severity=severity,
+                    risk_score=score,
+                    finding_status=risk_summary.get("finding_status", "Informational"),
+                    signature_triggered=sig_res.get("proof_of_concept") or sig_res.get("pattern_matched", ""),
+                    ml_score=ml_res.get("points", 0.0),
+                    lstm_score=dl_res.get("lstm_points", 0.0),
+                    autoencoder_score=dl_res.get("autoencoder_points", 0.0),
+                    recommendation=risk_summary.get("recommendation", ""),
+                    request_payload=payload_str,
+                    response_status=req_data.get("status_code", 200),
+                    response_size=req_data.get("response_size", 0),
+                    response_time=req_data.get("response_time", 0.0)
+                )
 
     # Update session overall totals and end time
     overall_score = round(max(total_risk_scores), 2) if total_risk_scores else 0.0
@@ -414,7 +426,10 @@ def api_trigger_scan():
         {"type": "Cross_Site_Scripting", "payload": "<script>alert('xss')</script>", "method": "POST"},
         {"type": "Command_Injection", "payload": "; cat /etc/passwd", "method": "GET"},
         {"type": "Broken_Authentication", "payload": "", "method": "GET", "headers": {"Authorization": "Bearer null"}},
-        {"type": "BOLA_IDOR", "payload": "", "method": "GET", "path_suffix": "/1"},
+        {"type": "BOLA_IDOR", "payload": "id=1", "method": "GET", "path_suffix": "/users/v1/1"},
+        {"type": "BOLA_IDOR", "payload": "id=2", "method": "GET", "path_suffix": "/users/v1/2"},
+        {"type": "BOLA_IDOR", "payload": "id=3", "method": "GET", "path_suffix": "/users/v1/3"},
+        {"type": "BOLA_IDOR", "payload": "id=999", "method": "GET", "path_suffix": "/users/v1/999"},
         {"type": "Baseline_Inspection", "payload": "", "method": "GET"}
     ]
 
@@ -496,23 +511,24 @@ def api_trigger_scan():
             if sig_res.get("is_vulnerable") or score > 0.0:
                 vulnerability_count += 1
 
-            save_finding(
-                session_id=session_obj.id,
-                endpoint_id=ep_obj.id,
-                attack_type=attack_name,
-                severity=severity,
-                risk_score=score,
-                finding_status=risk_summary.get("finding_status", "Informational"),
-                signature_triggered=sig_res.get("proof_of_concept") or sig_res.get("pattern_matched", ""),
-                ml_score=ml_res.get("points", 0.0),
-                lstm_score=dl_res.get("lstm_points", 0.0),
-                autoencoder_score=dl_res.get("autoencoder_points", 0.0),
-                recommendation=risk_summary.get("recommendation", ""),
-                request_payload=payload_str,
-                response_status=req_data.get("status_code", 200),
-                response_size=req_data.get("response_size", 0),
-                response_time=req_data.get("response_time", 0.0)
-            )
+            if score > 0 or sig_res.get("is_vulnerable") or sig_res.get("matched"):
+                save_finding(
+                    session_id=session_obj.id,
+                    endpoint_id=ep_obj.id,
+                    attack_type=attack_name,
+                    severity=severity,
+                    risk_score=score,
+                    finding_status=risk_summary.get("finding_status", "Informational"),
+                    signature_triggered=sig_res.get("proof_of_concept") or sig_res.get("pattern_matched", ""),
+                    ml_score=ml_res.get("points", 0.0),
+                    lstm_score=dl_res.get("lstm_points", 0.0),
+                    autoencoder_score=dl_res.get("autoencoder_points", 0.0),
+                    recommendation=risk_summary.get("recommendation", ""),
+                    request_payload=payload_str,
+                    response_status=req_data.get("status_code", 200),
+                    response_size=req_data.get("response_size", 0),
+                    response_time=req_data.get("response_time", 0.0)
+                )
 
     overall_score = round(max(total_risk_scores), 2) if total_risk_scores else 0.0
     complete_scan_session(
