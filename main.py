@@ -209,7 +209,7 @@ def main():
         from dashboard.app import create_app
         from config.settings import FLASK_PORT, FLASK_DEBUG
         app = create_app()
-        app.run(port=FLASK_PORT, debug=FLASK_DEBUG)
+        app.run(host="0.0.0.0", port=FLASK_PORT, debug=FLASK_DEBUG, use_reloader=False)
 
     elif args.url:
         run_pipeline(args.url)
