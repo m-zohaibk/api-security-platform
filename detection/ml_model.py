@@ -34,7 +34,9 @@ class MLAnomalyDetector:
 
     def __init__(self, model_path: Optional[str] = None):
         self.model_path = Path(model_path) if model_path else Path(ISOLATION_FOREST_PATH)
+        self.scaler_path = self.model_path.parent / "feature_scaler.pkl"
         self.model = self._load_model()
+        self.scaler = self._load_scaler()
 
     def _load_model(self) -> Optional[Any]:
         if not self.model_path.exists():
@@ -48,10 +50,18 @@ class MLAnomalyDetector:
             logger.error(f"Error loading Isolation Forest model from {self.model_path}: {exc}")
             return None
 
+    def _load_scaler(self) -> Optional[Any]:
+        if not self.scaler_path.exists():
+            return None
+        try:
+            return joblib.load(self.scaler_path)
+        except Exception:
+            return None
+
     def predict(self, feature_dict: Dict[str, Any]) -> Dict[str, Any]:
         """
         Runs Isolation Forest anomaly prediction on 12 extracted features.
-        Returns normalized anomaly score (0.0 to 1.0) and points (0 to 40).
+        Returns normalized anomaly score (0.0 to 1.0) and points (0 to 25).
         """
         if self.model is None:
             return {
@@ -67,18 +77,24 @@ class MLAnomalyDetector:
         else:
             vector = [feature_dict.get(k, 0) for k in self.FEATURE_KEYS]
 
-        features_array = np.array(vector).reshape(1, -1)
+        features_array = np.array(vector, dtype=float).reshape(1, -1)
+
+        if self.scaler is not None:
+            try:
+                features_array = self.scaler.transform(features_array)
+            except Exception:
+                pass
 
         try:
             # Raw decision function output (lower values indicate higher anomaly likelihood)
             decision_score = self.model.decision_function(features_array)[0]
             
             # Normalize decision score to an anomaly score between 0.0 and 1.0
-            # Decision scores typically range from -0.5 (very anomalous) to +0.5 (very normal)
-            raw_anomaly_score = 0.5 - decision_score
+            # For Isolation Forest, negative decision_score indicates anomaly
+            raw_anomaly_score = 0.5 - (decision_score * 5.0)
             normalized_score = float(np.clip(raw_anomaly_score, 0.0, 1.0))
             
-            is_anomaly = bool(normalized_score > 0.5)
+            is_anomaly = bool(decision_score < 0 or normalized_score > 0.5)
             points = round(normalized_score * 25.0, 2)
 
             return {

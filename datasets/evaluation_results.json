@@ -1,31 +1,31 @@
 {
-  "timestamp": "2026-08-15 23:45:48",
+  "timestamp": "2026-08-16 20:58:31",
   "layer_1_signature": {
-    "precision": 66.56,
-    "recall": 100.0,
-    "f1_score": 79.93,
-    "false_positive_rate": 100.0
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1_score": 0.0,
+    "false_positive_rate": 0.0
   },
   "layer_2_ml_isolation_forest": {
-    "precision": 90.72,
-    "recall": 13.58,
-    "f1_score": 23.62,
-    "false_positive_rate": 2.76
+    "precision": 74.39,
+    "recall": 20.57,
+    "f1_score": 32.22,
+    "false_positive_rate": 4.93
   },
   "layer_3_deep_learning": {
-    "precision": 93.25,
-    "recall": 17.05,
-    "f1_score": 28.83,
-    "false_positive_rate": 2.46
+    "precision": 90.31,
+    "recall": 29.56,
+    "f1_score": 44.54,
+    "false_positive_rate": 2.21
   },
   "combined_pipeline": {
-    "precision": 88.32,
-    "recall": 19.83,
-    "f1_score": 32.39,
-    "false_positive_rate": 5.22
+    "precision": 93.44,
+    "recall": 23.0,
+    "f1_score": 36.91,
+    "false_positive_rate": 1.12
   },
   "performance_metrics": {
-    "avg_scan_time_per_endpoint_sec": 0.0056,
+    "avg_scan_time_per_endpoint_sec": 0.0078,
     "dashboard_load_time_sec": 0.45
   },
   "owasp_api_top_10_coverage": {
