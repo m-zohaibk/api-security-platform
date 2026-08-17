@@ -73,6 +73,58 @@ def get_query_length(url):
     except:
         return 0
 
+def calculate_keyword_risk(payload, url):
+    risk_keywords = [
+        'select', 'union', 'insert', 'drop',
+        'delete', 'update', 'exec', 'script',
+        'alert', 'onerror', 'onload', 'eval',
+        'base64', 'passwd', 'shadow', 'whoami',
+        'null', 'none', 'true', 'admin', 'root'
+    ]
+    combined_text = (str(payload) + " " + str(url)).lower()
+    words = [w for w in combined_text.replace('&', ' ').replace('?', ' ').replace('=', ' ').replace('/', ' ').split() if w]
+    total_words = max(len(words), 1)
+    keyword_matches = sum(1 for kw in risk_keywords if kw in combined_text)
+    return round(min(keyword_matches / total_words, 1.0), 4)
+
+def calculate_param_risk(url):
+    risky_params = [
+        'id', 'user', 'uid', 'admin', 'debug',
+        'test', 'token', 'key', 'pass', 'pwd',
+        'cmd', 'exec', 'query', 'sql', 'file'
+    ]
+    if not url or '?' not in str(url):
+        return 0
+    try:
+        query = str(url).split('?')[1].split('HTTP')[0]
+        params = [p.split('=')[0].lower().strip() for p in query.split('&') if '=' in p]
+        return sum(1 for p in params if any(rp in p for rp in risky_params))
+    except Exception:
+        return 0
+
+def calculate_url_encoded_ratio(url):
+    if not url or str(url).strip() == 'nan':
+        return 0.0
+    return round(str(url).count('%') / max(len(str(url)), 1), 4)
+
+def calculate_payload_digit_ratio(payload):
+    if not payload or str(payload).strip() == 'nan':
+        return 0.0
+    digit_count = sum(1 for c in str(payload) if c.isdigit())
+    return round(digit_count / max(len(str(payload)), 1), 4)
+
+def check_sql_structure(payload, url):
+    sql_patterns = [
+        r"'\s*(or|and)\s+'",
+        r"\bunion\b.*\bselect\b",
+        r"--\s*$",
+        r";\s*(drop|delete|insert|update)",
+        r"'\s*=\s*'"
+    ]
+    combined = (str(payload) + " " + str(url)).lower()
+    import re
+    return 1 if any(re.search(p, combined, re.IGNORECASE) for p in sql_patterns) else 0
+
 def extract_features(row):
     url = str(row.get('URL', ''))
     content = str(row.get('content', ''))
@@ -126,6 +178,11 @@ def extract_features(row):
         'auth_header_present': auth_present,
         'status_code': 200,
         'response_size': min(float(payload_len) * 2, 5000),
+        'keyword_risk_score': calculate_keyword_risk(payload, url),
+        'param_name_risk': calculate_param_risk(url),
+        'url_encoded_ratio': calculate_url_encoded_ratio(url),
+        'payload_digit_ratio': calculate_payload_digit_ratio(payload),
+        'has_sql_structure': check_sql_structure(payload, url),
     }
 
 def main():
@@ -171,6 +228,7 @@ def main():
             print(f'Merged {len(vampi_sampled)} self-generated samples into combined dataset.')
 
     print(f'Combined features extracted: {features_df.shape}')
+    features_df = features_df.fillna(0.0)
 
     # Save features CSV
     features_csv_path = PROCESSED_DIR / "features.csv"
@@ -178,7 +236,7 @@ def main():
     print(f'Saved features.csv to {features_csv_path}')
 
     # Train/test split 80/20
-    X = features_df.drop('label', axis=1)
+    X = features_df.drop('label', axis=1).fillna(0.0)
     y = features_df['label']
 
     X_train, X_test, y_train, y_test = train_test_split(

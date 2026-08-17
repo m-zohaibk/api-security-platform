@@ -29,7 +29,12 @@ class MLAnomalyDetector:
         "header_count",
         "auth_header_present",
         "status_code",
-        "response_size"
+        "response_size",
+        "keyword_risk_score",
+        "param_name_risk",
+        "url_encoded_ratio",
+        "payload_digit_ratio",
+        "has_sql_structure"
     ]
 
     def __init__(self, model_path: Optional[str] = None):

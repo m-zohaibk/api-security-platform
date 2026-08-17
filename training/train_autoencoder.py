@@ -27,24 +27,29 @@ FEATURE_COLUMNS = [
     "header_count",
     "auth_header_present",
     "status_code",
-    "response_size"
+    "response_size",
+    "keyword_risk_score",
+    "param_name_risk",
+    "url_encoded_ratio",
+    "payload_digit_ratio",
+    "has_sql_structure"
 ]
 
 class FeatureAutoencoder(nn.Module):
-    def __init__(self, input_dim: int = 12, bottleneck_dim: int = 6):
+    def __init__(self, input_dim: int = 17, bottleneck_dim: int = 6):
         super(FeatureAutoencoder, self).__init__()
-        # Encoder: 12 -> 8 -> 6
+        # Encoder: 17 -> 10 -> 6
         self.encoder = nn.Sequential(
-            nn.Linear(input_dim, 8),
+            nn.Linear(input_dim, 10),
             nn.ReLU(),
-            nn.Linear(8, bottleneck_dim),
+            nn.Linear(10, bottleneck_dim),
             nn.ReLU()
         )
-        # Decoder: 6 -> 8 -> 12
+        # Decoder: 6 -> 10 -> 17
         self.decoder = nn.Sequential(
-            nn.Linear(bottleneck_dim, 8),
+            nn.Linear(bottleneck_dim, 10),
             nn.ReLU(),
-            nn.Linear(8, input_dim)
+            nn.Linear(10, input_dim)
         )
 
     def forward(self, x):
@@ -63,7 +68,7 @@ def train_autoencoder():
         print(f"[!] Missing train.csv dataset in {processed_dir}")
         return
 
-    df = pd.read_csv(train_path)
+    df = pd.read_csv(train_path).fillna(0.0)
     
     # Filter normal traffic only (label == 0)
     normal_df = df[df["label"] == 0]
@@ -81,7 +86,7 @@ def train_autoencoder():
     dataset = TensorDataset(tensor_x)
     loader = DataLoader(dataset, batch_size=32, shuffle=True)
 
-    model = FeatureAutoencoder(input_dim=12, bottleneck_dim=6)
+    model = FeatureAutoencoder(input_dim=17, bottleneck_dim=6)
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=0.005)
 

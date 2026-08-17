@@ -108,6 +108,49 @@ class ResponseParser:
         status_code = int(response_data.get("status_code", 0))
         response_size = int(response_data.get("response_size", 0))
 
+        # 5 New Security Risk Features
+        risk_keywords = [
+            'select', 'union', 'insert', 'drop',
+            'delete', 'update', 'exec', 'script',
+            'alert', 'onerror', 'onload', 'eval',
+            'base64', 'passwd', 'shadow', 'whoami',
+            'null', 'none', 'true', 'admin', 'root'
+        ]
+        combined_text = (str(payload) + " " + str(url_str)).lower()
+        words = re.findall(r'\w+', combined_text)
+        total_words = max(len(words), 1)
+        keyword_matches = sum(1 for kw in risk_keywords if kw in combined_text)
+        keyword_risk_score = round(min(keyword_matches / total_words, 1.0), 4)
+
+        risky_params = [
+            'id', 'user', 'uid', 'admin', 'debug',
+            'test', 'token', 'key', 'pass', 'pwd',
+            'cmd', 'exec', 'query', 'sql', 'file'
+        ]
+        param_names = [k.lower() for k in query_params.keys()]
+        if payload.strip().startswith('{') and payload.strip().endswith('}'):
+            try:
+                import json
+                j_data = json.loads(payload)
+                if isinstance(j_data, dict):
+                    param_names.extend([k.lower() for k in j_data.keys()])
+            except Exception:
+                pass
+        param_name_risk = sum(1 for p in param_names if any(rp in p for rp in risky_params))
+
+        url_encoded_ratio = round(url_str.count('%') / max(len(url_str), 1), 4)
+        digit_count = sum(1 for c in payload if c.isdigit())
+        payload_digit_ratio = round(digit_count / max(len(payload), 1), 4)
+
+        sql_patterns = [
+            r"'\s*(or|and)\s+'",
+            r"\bunion\b.*\bselect\b",
+            r"--\s*$",
+            r";\s*(drop|delete|insert|update)",
+            r"'\s*=\s*'"
+        ]
+        has_sql_structure = 1 if any(re.search(p, combined_text, re.IGNORECASE) for p in sql_patterns) else 0
+
         feature_vector = [
             encoded_method,
             path_depth,
@@ -120,7 +163,12 @@ class ResponseParser:
             header_count,
             auth_header_present,
             status_code,
-            response_size
+            response_size,
+            keyword_risk_score,
+            param_name_risk,
+            url_encoded_ratio,
+            payload_digit_ratio,
+            has_sql_structure
         ]
 
         feature_dict = {
@@ -136,6 +184,11 @@ class ResponseParser:
             "auth_header_present": auth_header_present,
             "status_code": status_code,
             "response_size": response_size,
+            "keyword_risk_score": keyword_risk_score,
+            "param_name_risk": param_name_risk,
+            "url_encoded_ratio": url_encoded_ratio,
+            "payload_digit_ratio": payload_digit_ratio,
+            "has_sql_structure": has_sql_structure,
             "feature_vector": feature_vector
         }
 

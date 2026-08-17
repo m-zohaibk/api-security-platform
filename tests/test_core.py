@@ -40,5 +40,5 @@ def test_response_parser_features():
     assert extracted["path_depth"] == 3 # /api/v1/users
     assert extracted["query_param_count"] == 1
     assert extracted["auth_header_present"] == 1
-    assert len(extracted["feature_vector"]) == 12
+    assert len(extracted["feature_vector"]) == 17
     assert "token" in extracted["sensitive_fields_leaked"]

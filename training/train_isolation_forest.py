@@ -24,7 +24,12 @@ FEATURE_COLUMNS = [
     "header_count",
     "auth_header_present",
     "status_code",
-    "response_size"
+    "response_size",
+    "keyword_risk_score",
+    "param_name_risk",
+    "url_encoded_ratio",
+    "payload_digit_ratio",
+    "has_sql_structure"
 ]
 
 def train_isolation_forest():
@@ -43,8 +48,8 @@ def train_isolation_forest():
         return
 
     logger.info("Loading processed training and testing dataset CSVs...")
-    train_df = pd.read_csv(train_path)
-    test_df = pd.read_csv(test_path)
+    train_df = pd.read_csv(train_path).fillna(0.0)
+    test_df = pd.read_csv(test_path).fillna(0.0)
 
     # Methodologically correct unsupervised anomaly detection:
     # Train Isolation Forest baseline strictly on normal HTTP traffic (label == 0)

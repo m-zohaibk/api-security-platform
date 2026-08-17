@@ -25,7 +25,9 @@ class DeepLearningDetector:
         "encoded_method", "path_depth", "url_length", "query_param_count",
         "query_string_length", "payload_length", "payload_entropy",
         "special_char_count", "header_count", "auth_header_present",
-        "status_code", "response_size"
+        "status_code", "response_size", "keyword_risk_score",
+        "param_name_risk", "url_encoded_ratio", "payload_digit_ratio",
+        "has_sql_structure"
     ]
 
     def __init__(self, models_dir: Optional[str] = None):
@@ -68,7 +70,7 @@ class DeepLearningDetector:
             logger.warning("Autoencoder model file missing. Layer 3 Autoencoder set to fallback.")
             return None
         try:
-            model = FeatureAutoencoder(input_dim=12, bottleneck_dim=6)
+            model = FeatureAutoencoder(input_dim=17, bottleneck_dim=6)
             model.load_state_dict(torch.load(ae_path))
             model.eval()
             return model
