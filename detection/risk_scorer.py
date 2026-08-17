@@ -29,16 +29,33 @@ class RiskScorer:
 
     @staticmethod
     def classify_severity(score: float) -> str:
-        if score >= 85.0:
+        if score >= 70.0:
             return "CRITICAL"
-        elif score >= 60.0:
+        elif score >= 40.0:
             return "HIGH"
-        elif score >= 30.0:
+        elif score >= 15.0:
             return "MEDIUM"
         elif score > 0.0:
             return "LOW"
         else:
             return "NONE"
+
+    @staticmethod
+    def calculate_hybrid_confidence(sig_matched: bool, ml_is_anomaly: bool, dl_is_suspicious: bool):
+        layers_triggered = sum([
+            1 if sig_matched else 0,
+            1 if ml_is_anomaly else 0,
+            1 if dl_is_suspicious else 0
+        ])
+        
+        if layers_triggered == 3:
+            return 1.0, layers_triggered    # All three agree - high conf
+        elif layers_triggered == 2:
+            return 0.75, layers_triggered   # Two agree - medium conf
+        elif layers_triggered == 1:
+            return 0.35, layers_triggered   # Only one - low confidence
+        else:
+            return 0.0, layers_triggered    # Nothing detected
 
     def calculate_risk(
         self,
@@ -50,10 +67,8 @@ class RiskScorer:
         **kwargs
     ) -> Dict[str, Any]:
         """
-        Calculates recalibrated combined risk score from all 3 detection layers using Proof Multiplier.
-        Section 1: Hard Response Gate (Circuit Breaker)
-        Section 4: Recalibrated Scoring Formula (Raw_ML_Score * Proof_Multiplier)
-        Section 5: Output Struct (is_vulnerable, risk_score, severity, proof_of_concept, telemetry_status)
+        Calculates combined risk score from all 3 detection layers using Hybrid Confidence Multiplier.
+        A finding is only HIGH or CRITICAL when at least 2 layers agree.
         """
         telemetry = kwargs.get("telemetry_data", {}) or {}
         resp_status = telemetry.get("status_code", kwargs.get("status_code", 200))
@@ -73,6 +88,9 @@ class RiskScorer:
                 "risk_score": 0.0,
                 "severity": "NONE",
                 "finding_status": "UNREACHABLE / NETWORK_DROPPED",
+                "confidence_level": 0,
+                "layers_triggered": 0,
+                "confidence_multiplier": 0.0,
                 "proof_of_concept": "HTTP request failed or network connection dropped (Status 0/None)",
                 "telemetry_status": {
                     "status_code": resp_status,
@@ -105,6 +123,9 @@ class RiskScorer:
                 "risk_score": 0.0,
                 "severity": "NONE",
                 "finding_status": "BLOCKED_OR_NOT_FOUND",
+                "confidence_level": 0,
+                "layers_triggered": 0,
+                "confidence_multiplier": 0.0,
                 "proof_of_concept": f"HTTP {resp_status} {status_desc} - Request dropped or endpoint non-existent",
                 "telemetry_status": {
                     "status_code": resp_status,
@@ -125,24 +146,28 @@ class RiskScorer:
             }
 
         # Section 4: Layer Point Calculations
-        # ML and Deep Learning always contribute their points based on telemetry anomaly detection
         ml_points = min(float(ml_result.get("points", 0.0)), self.MAX_ML_POINTS)
         lstm_points = min(float(dl_result.get("lstm_points", 0.0)), self.MAX_LSTM_POINTS)
         ae_points = min(float(dl_result.get("autoencoder_points", 0.0)), self.MAX_AE_POINTS)
 
-        # Signature proof affects signature points
-        has_proof = signature_result.get("has_proof", False) or signature_result.get("matched", False) or signature_result.get("is_vulnerable", False)
+        # Triggered Layer Conditions
+        has_proof = bool(signature_result.get("has_proof", False) or signature_result.get("matched", False) or signature_result.get("is_vulnerable", False))
         sig_points_raw = float(signature_result.get("points", 0.0))
         sig_points = min(sig_points_raw, self.MAX_SIG_POINTS) if has_proof else 0.0
 
-        # Calculate combined total score
-        proof_multiplier = 1.0 if has_proof else 0.0
+        ml_is_anomaly = bool(ml_result.get("is_anomaly", False) or ml_points >= 10.0)
+        dl_is_suspicious = bool(dl_result.get("is_anomaly", False) or (lstm_points + ae_points) >= 10.0 or dl_result.get("lstm_probability", 0.0) > 0.5)
+
+        # Calculate hybrid confidence multiplier
+        confidence, layers_triggered = self.calculate_hybrid_confidence(has_proof, ml_is_anomaly, dl_is_suspicious)
+
+        # Calculate combined total score with confidence weighting
         raw_total = sig_points + ml_points + lstm_points + ae_points
-        final_risk_score = round(min(self.MAX_TOTAL_POINTS, raw_total), 2)
+        final_risk_score = round(min(self.MAX_TOTAL_POINTS, raw_total * confidence), 2)
         severity = self.classify_severity(final_risk_score)
 
-        is_vulnerable = has_proof or final_risk_score >= 30.0
-        if has_proof:
+        is_vulnerable = has_proof or final_risk_score >= 40.0
+        if has_proof and layers_triggered >= 2:
             finding_status = "Confirmed"
         elif final_risk_score > 0.0:
             finding_status = "Suspected"
@@ -158,7 +183,7 @@ class RiskScorer:
             if has_proof:
                 proof_poc = "Vulnerability signature verified with active response indicators"
             elif final_risk_score > 0.0:
-                proof_poc = f"Multi-layer anomaly score ({final_risk_score}/100) triggered by ML/DL telemetry models"
+                proof_poc = f"Multi-layer anomaly score ({final_risk_score}/100) triggered by {layers_triggered}/3 detection layers"
             else:
                 proof_poc = "No vulnerability or anomaly criteria met"
 
@@ -170,6 +195,9 @@ class RiskScorer:
             "total_score": final_risk_score,
             "risk_score": final_risk_score,
             "severity": severity,
+            "confidence_level": layers_triggered,
+            "layers_triggered": layers_triggered,
+            "confidence_multiplier": confidence,
             "finding_status": finding_status,
             "proof_of_concept": proof_poc,
             "telemetry_status": {
@@ -183,7 +211,7 @@ class RiskScorer:
                 "lstm_points": lstm_points,
                 "autoencoder_points": ae_points,
                 "raw_total_points": raw_total,
-                "proof_multiplier": proof_multiplier
+                "confidence_multiplier": confidence
             },
             "signature_result": signature_result,
             "ml_result": ml_result,

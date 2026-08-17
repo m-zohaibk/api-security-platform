@@ -10,8 +10,9 @@ def test_risk_scorer_calculations():
 
     res = scorer.calculate_risk(mock_sig, mock_ml, mock_dl, "http://localhost/api", "GET")
     
-    assert res["total_score"] == 70.0  # 40 + 12.5 + 7.5 + 10 = 70.0
-    assert res["severity"] == "HIGH"
+    assert res["total_score"] == 70.0  # 3 layers -> conf 1.0 -> 70.0
+    assert res["severity"] == "CRITICAL"
+    assert res["confidence_level"] == 3
     assert res["finding_status"] == "Confirmed"
     assert "recommendation" in res
 
@@ -31,14 +32,14 @@ def test_risk_scorer_layer_caps_and_boundaries():
     assert res_cap["total_score"] == 100.0
     assert res_cap["severity"] == "CRITICAL"
 
-    # Exact severity boundaries: 0=NONE, 29=LOW, 30=MEDIUM, 59=MEDIUM, 60=HIGH, 84=HIGH, 85=CRITICAL
+    # Updated severity boundaries: 0=NONE, 0-15=LOW, 15-39=MEDIUM, 40-69=HIGH, 70+=CRITICAL
     assert RiskScorer.classify_severity(0.0) == "NONE"
-    assert RiskScorer.classify_severity(29.0) == "LOW"
-    assert RiskScorer.classify_severity(30.0) == "MEDIUM"
-    assert RiskScorer.classify_severity(59.0) == "MEDIUM"
-    assert RiskScorer.classify_severity(60.0) == "HIGH"
-    assert RiskScorer.classify_severity(84.0) == "HIGH"
-    assert RiskScorer.classify_severity(85.0) == "CRITICAL"
+    assert RiskScorer.classify_severity(14.0) == "LOW"
+    assert RiskScorer.classify_severity(15.0) == "MEDIUM"
+    assert RiskScorer.classify_severity(39.0) == "MEDIUM"
+    assert RiskScorer.classify_severity(40.0) == "HIGH"
+    assert RiskScorer.classify_severity(69.0) == "HIGH"
+    assert RiskScorer.classify_severity(70.0) == "CRITICAL"
 
 def test_ml_dl_independent_contribution_and_zero_baseline():
     scorer = RiskScorer()
@@ -53,13 +54,13 @@ def test_ml_dl_independent_contribution_and_zero_baseline():
     assert res_clean["severity"] == "NONE"
     assert res_clean["is_vulnerable"] is False
 
-    # 2. Signature has no proof (sig_points=0), but ML + DL detect anomalies -> Score = 12.5 + 7.5 + 10 = 30.0
+    # 2. Signature has no proof, ML + DL detect anomalies -> 2 layers -> conf=0.75 -> Score = (12.5 + 7.5 + 10) * 0.75 = 22.5
     mock_sig_no_proof = {"matched": False, "has_proof": False, "attack_type": "SQL_Injection", "points": 40.0}
     mock_ml = {"is_anomaly": True, "points": 12.5}
     mock_dl = {"lstm_points": 7.5, "autoencoder_points": 10.0}
 
     res_anom = scorer.calculate_risk(mock_sig_no_proof, mock_ml, mock_dl, "http://localhost/api", "GET")
-    assert res_anom["total_score"] == 30.0
+    assert res_anom["total_score"] == 22.5
     assert res_anom["severity"] == "MEDIUM"
-    assert res_anom["is_vulnerable"] is True
+    assert res_anom["confidence_level"] == 2
 
