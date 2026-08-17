@@ -81,13 +81,44 @@ def train_lstm_model():
                     if line_clean and not line_clean.startswith("#"):
                         malicious_texts.append(line_clean)
 
+    # Additional high-risk attack vectors
+    additional_malicious = [
+        # Encoded payloads
+        "%27%20OR%201%3D1--",
+        "%3Cscript%3Ealert(1)%3C%2Fscript%3E",
+        "&#x27;OR&#x20;1=1--",
+        "\\x27 OR 1=1--",
+        "' OR '1'='1",
+        "admin'--",
+        "' OR 1=1#",
+        "') OR ('1'='1",
+        # Path traversal
+        "../../../etc/passwd",
+        "..\\..\\..\\windows\\system32",
+        "%2e%2e%2f%2e%2e%2f",
+        "....//....//etc/passwd",
+        # Second order injection
+        "admin'/*",
+        "1; SELECT SLEEP(5)--",
+        "1 WAITFOR DELAY '0:0:5'--",
+        "'; EXEC xp_cmdshell('dir')--"
+    ]
+    malicious_texts.extend(additional_malicious)
+
     # Benign text samples
-    benign_texts = [
+    benign_base = [
         "user_login_request", "page=1&sort=asc", "id=10&category=books",
         "search_query=python", "action=view_profile", "status=active",
         "format=json&version=1.0", "limit=20&offset=0", "filter=recent",
-        "session_id=abc123xyz", "lang=en-US", "user_agent=browser"
-    ] * len(malicious_texts)
+        "session_id=abc123xyz", "lang=en-US", "user_agent=browser",
+        "username=john&password=pass123",
+        "search=laptop&category=electronics",
+        "page=1&limit=20&sort=created_at",
+        "name=John+Doe&email=john@example.com",
+        "token=abc123&action=view",
+        "filter=active&type=user"
+    ]
+    benign_texts = (benign_base * (len(malicious_texts) // len(benign_base) + 1))[:len(malicious_texts)]
 
     if not malicious_texts:
         logger.warning("No payload files found. Using fallback payload samples for training.")
