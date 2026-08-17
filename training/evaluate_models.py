@@ -89,11 +89,11 @@ class PlatformEvaluator:
 
                 # Layer 3
                 dl_res = self.dl_detector.analyze(sample_req["payload"], feat_dict)
-                l3_pred = 1 if dl_res["total_layer3_points"] >= 15.0 else 0
+                l3_pred = 1 if (dl_res.get("is_anomaly") or dl_res.get("total_layer3_points", 0.0) >= 10.0) else 0
 
                 # Risk Scorer Combined
                 risk_res = self.risk_scorer.calculate_risk(sig_res, ml_res, dl_res, sample_req["url"], sample_req["method"])
-                comb_pred = 1 if risk_res["total_score"] >= 30.0 else 0
+                comb_pred = 1 if (risk_res.get("total_score", 0.0) >= 20.0 or risk_res.get("is_vulnerable")) else 0
 
                 y_l1.append(l1_pred)
                 y_l2.append(l2_pred)

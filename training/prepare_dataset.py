@@ -156,7 +156,21 @@ def main():
         feature_list.append(feat)
 
     features_df = pd.DataFrame(feature_list)
-    print(f'Features extracted: {features_df.shape}')
+    
+    # Merge with self-generated telemetry scans if available
+    vampi_scans_path = BASE_DIR / "datasets" / "self_generated" / "vampi_scans.csv"
+    if vampi_scans_path.exists():
+        print('Merging self-generated VAmPI telemetry dataset...')
+        vampi_df = pd.read_csv(vampi_scans_path)
+        feature_cols = [c for c in features_df.columns if c in vampi_df.columns]
+        if 'label' in vampi_df.columns and len(feature_cols) >= 12:
+            # Sample up to 5000 records to maintain class balance
+            sample_size = min(len(vampi_df), 5000)
+            vampi_sampled = vampi_df[feature_cols].sample(n=sample_size, random_state=42)
+            features_df = pd.concat([features_df, vampi_sampled], ignore_index=True)
+            print(f'Merged {len(vampi_sampled)} self-generated samples into combined dataset.')
+
+    print(f'Combined features extracted: {features_df.shape}')
 
     # Save features CSV
     features_csv_path = PROCESSED_DIR / "features.csv"
