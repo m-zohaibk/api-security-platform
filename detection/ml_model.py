@@ -13,8 +13,8 @@ from config.settings import ISOLATION_FOREST_PATH
 class MLAnomalyDetector:
     """
     Layer 2 — ML Anomaly Detection Engine
-    Uses trained Isolation Forest model to evaluate 12 extracted numerical HTTP features
-    and calculates anomaly scores and risk points (0 to 40).
+    Uses trained Isolation Forest model to evaluate the defined numerical HTTP features
+    (schema available in FEATURE_KEYS, currently 17 features) and calculates anomaly scores and risk points (0 to 40).
     """
 
     FEATURE_KEYS = [
@@ -65,7 +65,7 @@ class MLAnomalyDetector:
 
     def predict(self, feature_dict: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Runs Isolation Forest anomaly prediction on 12 extracted features.
+        Runs Isolation Forest anomaly prediction on the extracted feature vector (schema defined by FEATURE_KEYS).
         Returns normalized anomaly score (0.0 to 1.0) and points (0 to 25).
         """
         if self.model is None:
@@ -77,7 +77,7 @@ class MLAnomalyDetector:
             }
 
         # Extract feature vector in correct ordered array shape
-        if "feature_vector" in feature_dict and len(feature_dict["feature_vector"]) == 12:
+        if "feature_vector" in feature_dict and len(feature_dict["feature_vector"]) == len(self.FEATURE_KEYS):
             vector = feature_dict["feature_vector"]
         else:
             vector = [feature_dict.get(k, 0) for k in self.FEATURE_KEYS]

@@ -116,7 +116,7 @@ class DeepLearningDetector:
         ae_error = 0.0
         ae_score_norm = 0.0
         if self.autoencoder is not None:
-            if "feature_vector" in feature_dict and len(feature_dict["feature_vector"]) == 12:
+            if "feature_vector" in feature_dict and len(feature_dict["feature_vector"]) == len(self.FEATURE_KEYS):
                 raw_vec = np.array(feature_dict["feature_vector"]).reshape(1, -1)
             else:
                 raw_vec = np.array([feature_dict.get(k, 0) for k in self.FEATURE_KEYS]).reshape(1, -1)

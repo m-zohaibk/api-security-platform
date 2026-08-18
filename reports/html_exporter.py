@@ -107,7 +107,7 @@ class HTMLReportExporter:
         <h2>Detection Layer Methodology</h2>
         <ul>
             <li><strong>Layer 1 (Signature Rules):</strong> Deterministic regex rules for missing security headers, stack traces, and structural attack indicators.</li>
-            <li><strong>Layer 2 (ML Anomaly Isolation Forest):</strong> Unsupervised anomaly scoring trained on 12 extracted HTTP telemetry features.</li>
+            <li><strong>Layer 2 (ML Anomaly Isolation Forest):</strong> Unsupervised anomaly scoring trained on the defined HTTP telemetry feature schema (17 features).</li>
             <li><strong>Layer 3 (Deep Learning):</strong> Character-level LSTM payload classification + PyTorch Autoencoder reconstruction error analysis.</li>
         </ul>
 
