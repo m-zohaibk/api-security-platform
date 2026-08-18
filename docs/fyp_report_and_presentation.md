@@ -11,7 +11,7 @@ Modern web architectures have increasingly shifted toward Application Programmin
 
 The platform eliminates the requirement for OpenAPI specification documents by employing automated DOM and URL route crawling. Telemetry data is evaluated across three complementary detection layers:
 1. **Layer 1 (Signature Engine):** Regex and rule-based inspection for deterministic attack vectors, header misconfigurations, and stack trace exposures.
-2. **Layer 2 (Machine Learning Anomaly Detection):** Unsupervised **Isolation Forest** trained on 12 extracted numerical HTTP features using the HTTP CSIC 2010 dataset.
+2. **Layer 2 (Machine Learning Anomaly Detection):** Unsupervised **Isolation Forest** trained on 17 extracted numerical HTTP features using the HTTP CSIC 2010 dataset.
 3. **Layer 3 (Deep Learning Anomaly Detection):** Character-level **LSTM** sequence modeling for payload structure classification combined with a PyTorch **Autoencoder** feature reconstruction error benchmark.
 
 Experimental evaluation on vulnerable target endpoints demonstrates an overall model precision of **98.04%**, recall of **100.00%**, and an F1-Score of **99.01%** for Layer 3 deep learning, while maintaining an average scan latency of **0.0094 seconds per endpoint** and achieving coverage across all **10 OWASP API Top 10** vulnerability categories.

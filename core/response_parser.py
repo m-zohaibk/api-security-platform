@@ -102,7 +102,20 @@ class ResponseParser:
         # Header analysis
         headers = response_data.get("request_headers", {}) or {}
         header_count = len(headers)
-        auth_header_present = 1 if any(h.lower() in ["authorization", "x-api-key", "bearer"] for h in headers.keys()) else 0
+        # Detect presence of authentication headers or bearer tokens in header values
+        auth_header_present = 0
+        for h, hv in headers.items():
+            h_l = h.lower()
+            if h_l in ["authorization", "x-api-key", "x-access-token"]:
+                auth_header_present = 1
+                break
+            try:
+                if isinstance(hv, str) and hv.strip().lower().startswith("bearer "):
+                    auth_header_present = 1
+                    break
+            except Exception:
+                # any unusual header value representation - ignore and continue
+                pass
 
         # Response attributes
         status_code = int(response_data.get("status_code", 0))

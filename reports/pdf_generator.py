@@ -137,7 +137,7 @@ class PDFReportGenerator:
         story.append(Paragraph("Detection Methodology", h2_style))
         methodology_text = (
             "1. <b>Layer 1 (Signature Engine):</b> Performs deterministic regex matching on URLs, parameters, headers, and responses.<br/>"
-            "2. <b>Layer 2 (Machine Learning):</b> Analyzes 12 extracted numerical HTTP telemetry features using an Isolation Forest model trained on HTTP CSIC datasets.<br/>"
+            "2. <b>Layer 2 (Machine Learning):</b> Analyzes the defined HTTP telemetry feature schema (17 features) using an Isolation Forest model trained on HTTP CSIC datasets.<br/>"
             "3. <b>Layer 3 (Deep Learning):</b> Combines character-level LSTM sequence classification with PyTorch Autoencoder feature reconstruction error benchmarking."
         )
         story.append(Paragraph(methodology_text, body_style))
