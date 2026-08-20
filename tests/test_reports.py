@@ -1,4 +1,5 @@
 import os
+import json
 import pytest
 from pathlib import Path
 from reports.pdf_generator import PDFReportGenerator
@@ -45,3 +46,51 @@ def test_html_report_export():
     file_path = exporter.export(dummy_session, dummy_findings)
     assert os.path.exists(file_path)
     assert file_path.endswith(".html")
+
+
+def test_sarif_report_export_contains_structured_proof_and_status(tmp_path):
+    from reports.sarif_exporter import SARIFReportExporter
+
+    session = {
+        "id": 1001,
+        "target_url": "https://example.test",
+        "overall_risk_score": 40.0,
+        "overall_severity": "High",
+        "total_endpoints_found": 1,
+        "total_vulnerabilities_found": 1,
+    }
+    findings = [
+        {
+            "url": "https://example.test/api/users/1",
+            "method": "GET",
+            "attack_type": "BOLA_IDOR",
+            "finding_status": "Confirmed",
+            "severity": "High",
+            "risk_score": 40.0,
+            "signature_triggered": "Unauthorized object access returned sensitive object properties",
+            "request_payload": "id=1",
+            "response_status": 200,
+            "recommendation": "Enforce object-level authorization.",
+        },
+        {
+            "url": "https://example.test/health",
+            "method": "GET",
+            "attack_type": "Security_Misconfiguration",
+            "finding_status": "Informational",
+            "severity": "Low",
+            "risk_score": 3.5,
+            "signature_triggered": "Missing headers",
+        },
+    ]
+
+    path = SARIFReportExporter(output_dir=str(tmp_path)).export(session, findings)
+    document = json.loads(Path(path).read_text(encoding="utf-8"))
+    results = document["runs"][0]["results"]
+    assert document["version"] == "2.1.0"
+    assert len(results) == 2
+    assert results[0]["properties"]["confirmed"] is True
+    assert results[0]["level"] == "error"
+    assert results[0]["locations"][0]["logicalLocations"][0]["kind"] == "endpoint"
+    assert "Unauthorized object access" in results[0]["message"]["text"]
+    assert results[1]["properties"]["confirmed"] is False
+    assert "apiSecurityIdentity" in results[0]["partialFingerprints"]

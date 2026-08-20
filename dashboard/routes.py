@@ -277,7 +277,9 @@ def export_report(session_id):
             findings_data.append({
                 "id": f.id,
                 "url": f.endpoint.url if f.endpoint else session_obj.target_url,
+                "method": f.endpoint.method if f.endpoint else "GET",
                 "attack_type": f.attack_type,
+                "finding_status": f.finding_status,
                 "severity": f.severity,
                 "risk_score": f.risk_score,
                 "signature_triggered": f.signature_triggered,
@@ -293,6 +295,7 @@ def export_report(session_id):
         from reports.pdf_generator import PDFReportGenerator
         from reports.json_exporter import JSONReportExporter
         from reports.html_exporter import HTMLReportExporter
+        from reports.sarif_exporter import SARIFReportExporter
         from flask import send_file
 
         if fmt == "json":
@@ -303,6 +306,10 @@ def export_report(session_id):
             exporter = HTMLReportExporter()
             out_file = exporter.export(session_data, findings_data)
             return send_file(out_file, as_attachment=True, download_name=f"scan_report_{session_id}.html")
+        elif fmt == "sarif":
+            exporter = SARIFReportExporter()
+            out_file = exporter.export(session_data, findings_data)
+            return send_file(out_file, as_attachment=True, download_name=f"scan_report_{session_id}.sarif")
         else:
             generator = PDFReportGenerator()
             out_file = generator.generate(session_data, findings_data)

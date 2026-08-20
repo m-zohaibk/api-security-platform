@@ -124,7 +124,7 @@ def _resolve_test_method(ep_info: Dict[str, Any], test_item: Dict[str, Any], def
     return test_item.get("method", default_method).upper()
 
 
-def run_pipeline(target_url: str):
+def run_pipeline(target_url: str, sarif_output: str = None):
     print("\n" + "="*65)
     print("      API SECURITY & ANOMALY DETECTION PLATFORM")
     print("="*65)
@@ -340,14 +340,51 @@ def run_pipeline(target_url: str):
             total_vulnerabilities=vulnerability_count
         )
 
+        if sarif_output:
+            from reports.sarif_exporter import SARIFReportExporter
+            export_db = SessionLocal()
+            try:
+                persisted_session = export_db.query(ScanSession).filter(ScanSession.id == session_obj.id).first()
+                persisted_findings = export_db.query(Finding).filter(Finding.session_id == session_obj.id).all()
+                session_data = {
+                    "id": persisted_session.id,
+                    "target_url": persisted_session.target_url,
+                    "overall_risk_score": persisted_session.overall_risk_score,
+                    "overall_severity": persisted_session.overall_severity,
+                    "total_endpoints_found": persisted_session.total_endpoints_found,
+                    "total_vulnerabilities_found": persisted_session.total_vulnerabilities_found,
+                }
+                findings_data = [
+                    {
+                        "url": finding.endpoint.url if finding.endpoint else persisted_session.target_url,
+                        "method": finding.endpoint.method if finding.endpoint else "GET",
+                        "attack_type": finding.attack_type,
+                        "finding_status": finding.finding_status,
+                        "severity": finding.severity,
+                        "risk_score": finding.risk_score,
+                        "signature_triggered": finding.signature_triggered,
+                        "recommendation": finding.recommendation,
+                        "request_payload": finding.request_payload,
+                        "response_status": finding.response_status,
+                        "response_size": finding.response_size,
+                        "response_time": finding.response_time,
+                    }
+                    for finding in persisted_findings
+                ]
+                SARIFReportExporter().export(session_data, findings_data, output_path=sarif_output)
+            finally:
+                export_db.close()
+
         print("\n" + "="*65)
         print(" SCAN PIPELINE COMPLETED SUCCESSFULLY")
         print(" All inspection records persisted to database.")
         print(" Launch web dashboard via `python main.py --dashboard` to view reports.")
         print("="*65 + "\n")
+        return vulnerability_count
 
     except Exception as exc:
         logger.error(f"Error during scan pipeline execution: {exc}")
+        return None
 
 
 def main():
@@ -364,6 +401,11 @@ def main():
         action="store_true",
         help="Launch Flask web dashboard"
     )
+    parser.add_argument(
+        "--sarif-output",
+        type=str,
+        help="Write a SARIF 2.1.0 report to this path after scanning"
+    )
     args = parser.parse_args()
 
     if args.dashboard:
@@ -374,7 +416,9 @@ def main():
         app.run(host="0.0.0.0", port=FLASK_PORT, debug=FLASK_DEBUG, use_reloader=False)
 
     elif args.url:
-        run_pipeline(args.url)
+        confirmed_count = run_pipeline(args.url, sarif_output=args.sarif_output)
+        if isinstance(confirmed_count, int) and confirmed_count > 0:
+            sys.exit(1)
 
     else:
         parser.print_help()
