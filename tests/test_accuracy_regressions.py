@@ -583,3 +583,89 @@ def test_405_response_is_not_vulnerability_proof():
     )
     assert result["is_vulnerable"] is False
     assert result["matched"] is False
+
+
+class _RedirectHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path.startswith("/redirect"):
+            self.send_response(302)
+            self.send_header("Location", "https://example.com/api-security-redirect-check")
+            self.end_headers()
+        else:
+            self.send_response(200)
+            self.end_headers()
+
+    def log_message(self, *_args):
+        pass
+
+
+def test_request_engine_can_preserve_redirect_location():
+    server = ThreadingHTTPServer(("127.0.0.1", 0), _RedirectHandler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        result = RequestEngine(timeout=2).send_request(
+            "GET",
+            f"http://127.0.0.1:{server.server_port}/redirect",
+            follow_redirects=False,
+        )
+        assert result["status_code"] == 302
+        assert result["response_headers"]["location"] == "https://example.com/api-security-redirect-check"
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def test_external_open_redirect_requires_external_location_proof():
+    result = SignatureDetector().analyze(
+        {
+            "url": "http://example.test/redirect",
+            "payload": "https://example.com/api-security-redirect-check",
+            "attack_category": "Open_Redirect",
+            "status_code": 302,
+            "response_size": 0,
+            "response_headers": {"Location": "https://example.com/api-security-redirect-check"},
+            "response_body": "",
+            "request_headers": {},
+        }
+    )
+    assert result["attack_type"] == "Open_Redirect"
+    assert result["finding_status"] == "Confirmed"
+    assert result["is_vulnerable"] is True
+
+
+def test_relative_redirect_is_not_confirmed_as_open_redirect():
+    result = SignatureDetector().analyze(
+        {
+            "url": "http://example.test/redirect",
+            "payload": "https://example.com/api-security-redirect-check",
+            "attack_category": "Open_Redirect",
+            "status_code": 302,
+            "response_size": 0,
+            "response_headers": {"Location": "/safe"},
+            "response_body": "",
+            "request_headers": {},
+        }
+    )
+    assert result["attack_type"] == "Open_Redirect"
+    assert result["finding_status"] == "Suspected"
+    assert result["is_vulnerable"] is False
+
+
+def test_redirect_query_route_selects_open_redirect_probe():
+    from main import _select_test_queue
+
+    queue = [
+        {"type": "Open_Redirect", "payload": "https://example.com/check", "method": "GET"},
+        {"type": "Baseline_Inspection", "payload": "", "method": "GET"},
+        {"type": "SQL_Injection_GET", "payload": "' OR 1=1 --", "method": "GET"},
+    ]
+    selected = _select_test_queue(
+        {
+            "url": "https://example.test/vulnerabilities/open_redirect/source/low.php?redirect=info.php%3Fid%3D1",
+            "method": "GET",
+            "query_fields": ["redirect"],
+        },
+        queue,
+    )
+    assert [item["type"] for item in selected] == ["Open_Redirect", "Baseline_Inspection"]

@@ -19,8 +19,9 @@ import main
 
 def targeted_discover(self):
     self.max_depth = 0
-    if not self.base_url.endswith("/"):
-        self.base_url += "/"
+    parsed_base = urlsplit(self.base_url)
+    if not parsed_base.path.endswith("/") and not parsed_base.query:
+        self.base_url = parsed_base._replace(path=parsed_base.path + "/").geturl()
     self._crawl_page(self.base_url, depth=0)
     by_url = {}
     target_path = urlsplit(self.base_url).path.rstrip("/")

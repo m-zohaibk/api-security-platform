@@ -69,6 +69,7 @@ def _bind_payload_to_endpoint(ep_info: Dict[str, Any], method: str, payload: str
 def _select_test_queue(ep_info: Dict[str, Any], active_test_queue: List[Dict[str, Any]]):
     """Select a bounded, non-destructive probe set for an endpoint/module."""
     path = urlsplit(ep_info.get("url", "")).path.lower()
+    query_fields = {str(field).lower() for field in (ep_info.get("query_fields") or [])}
     by_type = {item["type"]: item for item in active_test_queue}
 
     if "graphql" in path or "graphiql" in path:
@@ -84,6 +85,8 @@ def _select_test_queue(ep_info: Dict[str, Any], active_test_queue: List[Dict[str
     elif "xss_s" in path:
         # Do not create persistent stored-XSS content on a shared public lab.
         selected = []
+    elif "open_redirect" in path or "redirect" in path or "redirect" in query_fields:
+        selected = [by_type["Open_Redirect"]]
     elif "exec" in path:
         selected = [by_type["Command_Injection"]]
     elif "/fi/" in path or "file" in path:
@@ -162,6 +165,7 @@ def run_pipeline(target_url: str):
             {"type": "Cross_Site_Scripting", "payload": "<script>alert('xss')</script>", "method": "POST"},
             {"type": "Command_Injection", "payload": "; cat /etc/passwd", "method": "GET"},
             {"type": "Local_File_Inclusion", "payload": "../../../../../../etc/passwd", "method": "GET"},
+            {"type": "Open_Redirect", "payload": "https://example.com/api-security-redirect-check", "method": "GET", "follow_redirects": False},
             {"type": "Broken_Authentication", "payload": "", "method": "GET", "headers": {"Authorization": "Bearer null"}},
             {"type": "BOLA_IDOR", "payload": "id=1", "method": "GET", "path_suffix": "/users/v1/1"},
             {"type": "BOLA_IDOR", "payload": "id=2", "method": "GET", "path_suffix": "/users/v1/2"},
@@ -219,7 +223,8 @@ def run_pipeline(target_url: str):
                     custom_headers=custom_headers,
                     json_payload=test_item.get("json_payload"),
                     query_params=query_params,
-                    form_data=form_data
+                    form_data=form_data,
+                    follow_redirects=test_item.get("follow_redirects", True)
                 )
                 return test_item, test_url, test_method, payload_str, req_data
 

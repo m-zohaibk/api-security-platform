@@ -28,7 +28,8 @@ class RequestEngine:
         custom_headers: Optional[Dict[str, str]] = None,
         json_payload: Optional[Dict[str, Any]] = None,
         query_params: Optional[Dict[str, Any]] = None,
-        form_data: Optional[Dict[str, Any]] = None
+        form_data: Optional[Dict[str, Any]] = None,
+        follow_redirects: bool = True
     ) -> Dict[str, Any]:
         """
         Dispatches HTTP request to the target URL with provided payload and records performance metrics.
@@ -67,7 +68,7 @@ class RequestEngine:
         start_time = time.time()
 
         try:
-            with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
+            with httpx.Client(timeout=self.timeout, follow_redirects=follow_redirects) as client:
                 response = client.request(
                     method=method_upper,
                     url=url,
@@ -136,7 +137,8 @@ class RequestEngine:
         custom_headers: Optional[Dict[str, str]] = None,
         json_payload: Optional[Dict[str, Any]] = None,
         query_params: Optional[Dict[str, Any]] = None,
-        form_data: Optional[Dict[str, Any]] = None
+        form_data: Optional[Dict[str, Any]] = None,
+        follow_redirects: bool = True
     ) -> Dict[str, Any]:
         """
         Asynchronously dispatches HTTP request using httpx.AsyncClient for high-throughput API testing.
@@ -174,7 +176,7 @@ class RequestEngine:
         start_time = time.time()
 
         try:
-            async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=True) as client:
+            async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=follow_redirects) as client:
                 response = await client.request(
                     method=method_upper,
                     url=url,

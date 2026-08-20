@@ -1,80 +1,106 @@
-# API Security Platform Capability and Gap Assessment
+# Latest API Security Platform Capability and Gap Assessment
 
 **Repository:** [`m-zohaibk/api-security-platform`](https://github.com/m-zohaibk/api-security-platform)
-**Assessment date:** 2026-08-20
-**Author:** Manus AI
+**Assessment date:** 2026-08-21
+**Assessment scope:** Current working version after the repository cleanup and the open-redirect capability improvement
+**Automated validation:** **68 tests passed**
 
 ## Executive Assessment
 
-The platform is a useful proof-oriented prototype for bounded API and web-application testing. Its strongest current capability is the separation between **confirmed** and **suspected** findings. A confirmed result requires a concrete response proof such as SQL error text, an explicit time-delay response, verbatim reflected HTML, command output, or local-file content. This design is materially safer than counting payload syntax or model anomaly scores as exploitable vulnerabilities.
+The previous gap assessment was substantially accurate about the scanner’s proof-oriented design and its major missing capabilities, but it was not fully current. In particular, it still described the scanner as sequential and listed open-redirect detection as missing. The current version uses bounded active-probe concurrency, preserves redirect responses when required, and now confirms external open redirects from an untrusted `Location` header. This document replaces the previous assessment and should be treated as the current capability baseline.
 
-The cross-target work demonstrates meaningful coverage. The scanner independently confirmed command injection and reflected XSS on DVWA, detected GraphQL introspection as informational on DVGA, matched the manual and automated score on testasp, and completed a 42-endpoint safe-mode crAPI scan with no confirmed findings. The complete automated suite contains **64 passing tests** after the final changes.
+The platform is a **proof-oriented API and web-application scanner**, not yet a complete authenticated API security platform. It is strongest when a vulnerability can be established from a deterministic HTTP response marker. Confirmed findings require proof such as a database error, explicit delay response, unescaped reflection, command output, local-file content, or an external redirect response. Payload syntax, anomaly scores, and missing headers remain separate from confirmed vulnerability counts.
 
-The platform is not yet a full API security testing product. It lacks authenticated session workflows, specification-driven parameter coverage, browser execution, state-aware business-logic checks, robust differential analysis for blind vulnerabilities, and several major API abuse classes. ML and deep-learning layers exist in the architecture, but they should not be described as validated vulnerability detectors until representative labeled training and evaluation datasets are available.
+The current implementation has been verified on authorized training targets. It confirmed command injection and reflected XSS on DVWA, confirmed LFI on DVWA, confirmed an external open redirect on the DVWA training endpoint, detected GraphQL introspection as informational on DVGA, matched the testasp manual score, and completed a safe-mode crAPI assessment without confirmed active-probe findings. The repository’s complete test suite now passes **68 tests**.
+
+## What Changed Since the Previous Assessment
+
+| Previous assessment statement | Current status |
+|---|---|
+| Active scanning was sequential and slow. | Updated. Active probes now use bounded concurrency controlled by `ACTIVE_CONCURRENCY`, defaulting to four workers. Detection and persistence remain sequential. |
+| Open redirect was missing. | Updated. External redirects are tested with `follow_redirects=False` and confirmed only from an external 3xx `Location` header. |
+| Redirect evidence was not preserved. | Updated. The request engine now accepts an explicit `follow_redirects` option for synchronous and asynchronous requests. |
+| Redirect routes were not reliably selected. | Updated. Paths containing `open_redirect`, `redirect`, or a discovered `redirect` query field route to the dedicated probe. |
+| The report described only the earlier 64-test state. | Updated. The latest suite contains **68 passing tests**, including redirect transport, proof, and routing regressions. |
+
+The repository cleanup removed older session-history reports and raw exploratory artifacts. The retained documents are the final accuracy report, this capability assessment, and the performance report. The current regression source remains [`tests/test_accuracy_regressions.py`](tests/test_accuracy_regressions.py), and the focused scan harness remains [`tests/targeted_main_scan.py`](tests/targeted_main_scan.py).
 
 ## Current Capability Matrix
 
-| Capability | Current behavior | Verification status | Main boundary |
+| Capability | Current implementation | Current verification | Remaining boundary |
 |---|---|---|---|
-| Endpoint discovery | Crawls HTML, parses OpenAPI when available, records methods and form metadata, merges duplicate URL discoveries, and applies a configurable endpoint budget. | Exercised on testasp, DVWA, DVGA, and crAPI. | Dynamic JavaScript routes and undocumented authenticated routes may remain undiscovered. |
-| SQL injection | Sends GET/form/JSON SQL probes; checks SQL error signatures and explicit delay payloads such as `SLEEP`, `BENCHMARK`, `pg_sleep`, and `WAITFOR DELAY`. | Timing false positive reproduced and fixed on DVWA; credential probe exercised on crAPI. | No reliable blind differential inference, DBMS-specific depth, or authenticated parameter coverage. |
-| Reflected XSS | Sends method-aware payloads and confirms only verbatim reflection in HTML/XML responses. | Confirmed independently on DVWA reflected-XSS module. | Stored, DOM, JavaScript-context, attribute-context, CSP-bypass, and browser-execution cases are not covered. |
-| Command injection | Routes command probes to relevant forms/parameters and verifies command output markers or strong execution evidence. | Confirmed independently on DVWA using `root:x:0:0:` proof. | Limited payload set; no broad shell/OS matrix or blind command differential analysis. |
-| Local file inclusion | Sends traversal probes and confirms known local-file markers such as `/etc/passwd` content. | Confirmed in the DVWA LFI verification cycle. | No Windows path matrix, wrapper abuse coverage, remote inclusion workflow, or encoding bypass matrix. |
-| BOLA/IDOR | Tests selected numeric object suffixes and requires both sensitive-data evidence and an unauthenticated context before confirmation. | Regression-tested; no confirmed crAPI BOLA claim was made without authenticated object pairs. | Requires multiple identities and object ownership context for meaningful authorization testing. |
-| Authentication weakness | Exercises limited null/undefined bearer and weak-auth signatures; credential-specific SQLi routing was added. | Credential endpoint manually compared on crAPI. | No complete login/session lifecycle, MFA, password-reset, token replay, or account-lockout workflow. |
-| GraphQL introspection | Discovers `/graphql` and `/graphiql`, sends structured introspection JSON, and classifies schema exposure as informational. | Manually verified on DVGA; 12 fields observed and scanner category preserved. | No field-level authorization, mutation safety, depth/alias abuse, resolver injection, or GraphQL rate-limit testing. |
-| Security misconfiguration | Checks configured security headers and keeps the observation separate from confirmed exploit counts. | Observed across training targets, including crAPI. | Header policy is generic and should be risk-contextualized by content type, route, TLS, and deployment role. |
-| Verbose error exposure | Detects configured stack-trace, SQL error, and runtime exception signatures. | Covered by signature/regression tests. | No systematic error-trigger matrix or sensitive-secret classification beyond configured patterns. |
-| Sensitive data exposure | Checks configured password, secret, token, and API-key patterns and supports sensitive-data-aware BOLA proof. | Covered in regression tests and used in risk gating. | Limited pattern language; no entropy analysis, structured secret scanners, or data classification. |
-| ML/DL anomaly layers | Combines Isolation Forest, LSTM, and autoencoder signals in the risk scorer. | Pipeline behavior is tested; evaluation fallback no longer fabricates labels when datasets are missing. | Models are not evidence of exploitability and are not presently validated on a representative labeled API corpus. |
+| Endpoint discovery | Crawls HTML, parses OpenAPI/Swagger when available, probes common paths, records forms and query fields, merges duplicate metadata, and applies `MAX_ENDPOINTS`. | Exercised across DVWA, DVGA, testasp, and crAPI. | Dynamic JavaScript routes, authenticated routes, and API routes revealed only after workflow actions may be missed. |
+| HTTP transport | Supports GET, POST, PUT, PATCH, DELETE, named query/form/JSON fields, empty JSON objects, custom headers, async requests, and explicit redirect-following control. | Regression-tested and used on real training targets. | No persistent connection pool across all sync requests; discovery remains mostly sequential. |
+| Bounded performance | Active probes are dispatched with bounded concurrency through `ACTIVE_CONCURRENCY`; analysis and SQLite writes remain sequential. | Broader DVWA run completed in 216 seconds with four workers after a prior sequential timeout. | Discovery is still a significant sequential cost; no adaptive host rate control or progress ETA. |
+| SQL injection | Tests error-based and selected time-based SQLi, with explicit delay payload requirements and credential/login JSON routing. | Timing false positive removed on DVWA; credential endpoint compared on crAPI. | Blind SQLi differential analysis, broad DBMS payload families, and authenticated parameter coverage are missing. |
+| Reflected XSS | Sends method-aware probes to discovered fields and confirms only exact unescaped reflection in HTML/XML. | Confirmed manually and automatically on DVWA. | Stored XSS, DOM XSS, JavaScript-context XSS, attribute-context XSS, CSP bypass, and browser execution are missing. |
+| Command injection | Routes command probes to relevant module fields and confirms strong command-output markers or delay evidence. | Confirmed manually and automatically on DVWA using `root:x:0:0:`. | Payload corpus is small; blind command injection and broader OS/shell coverage are missing. |
+| Local file inclusion | Sends traversal probes and checks known local-file markers. | Confirmed on DVWA using `/etc/passwd` evidence. | Windows paths, encoding bypasses, wrappers, remote inclusion, and protocol-specific behavior are not covered. |
+| Open redirect | Sends an external destination to redirect-like query routes without following the redirect and confirms an external 3xx `Location` header. | Confirmed on DVWA: HTTP 302 to `https://example.com/api-security-redirect-check`. | No redirect-chain policy analysis, JavaScript redirects, meta refresh, encoded bypass matrix, or allowlist-aware validation. |
+| BOLA/IDOR | Tests selected numeric object suffixes and requires sensitive data plus an unauthenticated context before confirmation. | Regression-tested; no unsupported confirmed claim was made on crAPI. | No two-principal ownership model, role comparison, or field-level property authorization. |
+| Authentication weakness | Tests limited null/undefined bearer patterns, weak-auth signatures, and credential SQLi routing. | Credential endpoint manually compared on crAPI. | No complete login/session lifecycle, MFA, password reset, token replay, lockout, or session fixation workflow. |
+| GraphQL introspection | Discovers `/graphql` and `/graphiql`, sends structured introspection JSON, and classifies schema exposure as informational. | Manually verified on DVGA with 12 query fields. | No field authorization, mutation safety, depth/alias abuse, resolver injection, batching, or GraphQL rate-limit testing. |
+| Security misconfiguration | Checks configured security headers and separates observations from confirmed vulnerability totals. | Observed on training targets, including crAPI. | Header policy is generic and does not yet account for route role, TLS policy, browser context, or API-specific risk. |
+| Verbose errors | Detects configured stack traces, SQL errors, and runtime exception signatures. | Covered by regression tests and pipeline behavior. | No systematic error-trigger matrix, secret classification, or stack-trace normalization. |
+| Sensitive data exposure | Detects configured password, secret, token, and API-key patterns and supports sensitive-data-aware BOLA proof. | Covered by regression tests and used in risk gating. | No entropy analysis, structured secret scanner, PII classification, or response-field sensitivity model. |
+| ML/DL triage | Combines Isolation Forest, LSTM, and autoencoder signals in risk scoring. | Pipeline behavior is tested; missing datasets no longer receive fabricated labels. | Models are not evidence of exploitability and are not validated against a representative labeled API corpus. |
 
-## Major Missing or Insufficient Capabilities
+## Gap Status and Improvement Method
 
-| Gap | Why it matters | Required improvement |
-|---|---|---|
-| Authenticated scanning | Most meaningful API authorization flaws are visible only after login and across more than one identity. | Add disposable-account profiles, cookie/token capture, refresh handling, CSRF-token support, and separate read-only versus state-changing policies. |
-| BOLA and broken object-property authorization | Numeric ID probing alone cannot establish ownership or field-level authorization. | Model principals, object owners, roles, response diffs, and sensitive-field access across at least two identities. |
-| Blind SQL injection | Absence of an error message does not prove absence of injection. | Add baseline repetition, control/payload pairs, stable timing statistics, status/body-shape diffs, and DBMS-specific payload families. |
-| Stored XSS | Persistence and later rendering are distinct from immediate reflection. | Add an opt-in disposable-record workflow, retrieval verification, cleanup, and strict target-scope safeguards. |
-| DOM XSS | The vulnerability may exist only after client-side JavaScript executes. | Add browser instrumentation, sink/source tracing where possible, and a non-persistent payload corpus. |
-| CSRF | APIs using cookies or browser sessions may accept cross-origin state changes. | Add origin/referrer checks, CSRF-token validation, same-site cookie analysis, and safe canary actions. |
-| File upload | Upload handlers commonly expose parser, path, content-type, and storage weaknesses. | Add controlled benign files, polyglot checks, filename/path traversal probes, size limits, and cleanup. |
-| Brute force and rate limiting | Abuse resistance requires repeated controlled requests and account lockout/rate-limit measurement. | Add a low-volume policy-aware test with explicit thresholds, backoff, and opt-in authorization. |
-| Open redirect | Redirect validation requires following and classifying `Location` responses. | Add external-origin canaries, relative/encoded redirect payloads, and redirect-chain proof. |
-| SSRF | Server-side URL fetches need an out-of-band or controlled callback proof. | Add an authorized callback collector and safe internal-address test policy. |
-| XXE and insecure deserialization | These depend on parser formats and server-side object handling not represented by generic JSON probes. | Add content-type-aware XML and serialized-object probes with non-destructive canaries. |
-| JWT and token manipulation | Weak signing, `alg:none`, key confusion, expiry, audience, issuer, and replay defects need token lifecycle analysis. | Add a token parser, controlled mutation engine, claims validation, and authenticated replay checks. |
-| Mass assignment | Extra writable properties may alter authorization or business state. | Derive schemas from OpenAPI and observed objects; send harmless unknown/read-only fields and compare responses. |
-| API version and shadow endpoints | Deprecated or undocumented versions may expose weaker controls. | Improve specification comparison, version enumeration, route fingerprinting, and authorization parity checks. |
-| Business-logic abuse | Coupon, purchase, transfer, feedback, and workflow flaws require state and invariants rather than signatures. | Add explicit state models, test accounts, transaction limits, and cleanup/rollback hooks. |
-| Browser and JavaScript coverage | SPA shells can hide API routes and DOM-only behavior. | Add optional browser crawling and network-log import while keeping the core HTTP scanner deterministic. |
+The following table distinguishes gaps that are still absent from capabilities that are present but incomplete. It also provides a concrete improvement method and a safe testing method rather than only naming the gap.
 
-## Accuracy Improvements Completed in This Work
+| Gap | Current status | Improvement method | Safe validation method |
+|---|---|---|---|
+| Authenticated scanning | Missing | Add disposable account profiles, cookie/token capture, refresh handling, CSRF-token extraction, and explicit read-only/state-changing policies. | Use a disposable account on a local or authorized training target; verify login, authenticated GET, logout, and token refresh without destructive actions. |
+| Multi-principal BOLA | Partial only | Model anonymous, user, and administrator principals; compare object ownership and sensitive fields across identities. | Use two disposable accounts and harmless read-only object IDs; confirm only when one principal reads another’s protected object or field. |
+| Broken object-property authorization | Missing | Derive writable/read-only fields from OpenAPI and observed JSON; send harmless extra fields and compare accepted properties. | Use a disposable record and non-sensitive canary properties; verify server-side field filtering without persisting harmful changes. |
+| Blind SQLi | Partial only | Add repeated controls, median/MAD timing, status/body-shape diffs, stable-size comparisons, and DBMS-specific explicit delay families. | Use DVWA blind-SQLi training mode with bounded probes and no destructive SQL; require repeated differential evidence. |
+| Stored XSS | Deliberately skipped by default | Add an opt-in disposable-record workflow, retrieval verification, cleanup, and a hard target-scope guard. | Use only a disposable local/training account and a canary record; verify storage and retrieval, then delete the record. |
+| DOM XSS | Missing | Add optional browser instrumentation, network-log import, URL source tracking, and sink detection. | Use a browser-enabled training page with a non-persistent canary and verify DOM execution without stored content. |
+| CSRF | Missing | Test Origin/Referer validation, CSRF tokens, SameSite cookies, and safe canary state actions. | Use a disposable account and a harmless state-change endpoint that can be reverted; never submit password, purchase, or deletion actions. |
+| File upload | Missing | Add benign file fixtures, content-type mismatch checks, filename/path traversal checks, size limits, and cleanup. | Upload only inert text/image canaries to an authorized lab; verify storage behavior and remove the artifact. |
+| Brute force and rate limiting | Missing | Add low-volume policy-aware attempts, backoff, thresholds, and lockout detection. | Use a disposable account, very small request budgets, and stop at the first lockout or rate-limit signal. |
+| Redirect chains and browser redirects | Partial | Follow redirect chains in a separate opt-in mode; add JavaScript and meta-refresh analysis and allowlist validation. | Use external canary domains and never follow into private network ranges; classify only controlled redirect destinations. |
+| SSRF | Missing | Add an authorized callback collector and safe URL classes; distinguish DNS, HTTP, and internal-address behavior. | Use a dedicated callback endpoint owned by the tester; never probe cloud metadata or private infrastructure without explicit authorization. |
+| XXE | Missing | Add content-type-aware XML probes with external entity disabled/enabled comparisons and safe local canaries. | Use a local or training parser target and a non-sensitive canary file; do not read host secrets. |
+| Insecure deserialization | Missing | Add format detection and benign serialized-object canaries with strict content-type routing. | Use isolated training targets and harmless object markers; never execute arbitrary gadget chains. |
+| JWT/token manipulation | Missing | Parse claims, mutate `alg`, expiry, issuer, audience, and signature fields, then replay against read-only endpoints. | Use disposable tokens on an authorized lab; never replay real user tokens or attack production identity providers. |
+| Mass assignment | Missing | Use OpenAPI/JSON schemas to identify server-managed fields and send harmless unknown properties. | Use disposable records and canary fields; verify whether unauthorized fields are accepted without harmful state changes. |
+| API rate limiting | Missing | Measure requests per route with controlled concurrency, Retry-After handling, and per-account budgets. | Use low request counts on training targets and stop on a 429, lockout, or service degradation signal. |
+| Business-logic abuse | Missing | Add explicit state machines, invariants, transaction limits, and rollback/cleanup hooks. | Validate only on disposable accounts and reversible training workflows; do not test purchases, transfers, or deletion on shared public labs. |
+| GraphQL authorization and abuse | Partial introspection only | Add schema-driven field authorization, mutation classification, query depth, aliases, batching, and resolver timing checks. | Use read-only queries and bounded depth/alias counts against DVGA or a local clone. |
+| Browser and SPA coverage | Partial shell detection only | Add optional browser crawling and import of browser network logs while retaining deterministic HTTP verification. | Use a sandbox browser session and non-persistent payloads; keep browser execution separate from confirmed server-side proof. |
+| ML/DL validation | Triage only | Build a labeled corpus containing vulnerable and clean API responses, calibrate thresholds, and report confidence intervals. | Evaluate offline against fixed training/validation/test splits; never let an unvalidated model promote a finding to confirmed. |
 
-The initial implementation had several accuracy defects that were exposed by real training-target testing. Risk aggregation promoted suspected signatures into confirmed totals; proof wording claimed verification where no proof existed; BOLA relied too heavily on numeric paths; empty JSON objects were not transmitted; blank query parameters were dropped from model features; pipeline counts included non-confirmed results; evaluator fallback fabricated labels when datasets were absent; and OWASP coverage was hardcoded rather than derived from detector output.
+## Improvements Implemented and Tested in the Current Version
 
-Target-driven testing exposed further defects. The endpoint cap was not consistently enforced, discovery did not pass the scan timeout, BOLA suffixes could be appended to query-bearing URLs, duplicate URL discovery could discard form metadata, payloads were not bound to real form fields, form methods and hidden defaults were lost, generic routing crossed attack categories, and stored XSS was unsafe for a shared public target. These were corrected with metadata merging, field-aware request binding, method-aware module routing, category-aware verification, and an explicit skip for persistent probes.
+The current version includes proof-gated confirmed counts, explicit suspected wording, form-aware payload binding, method-aware routing, GraphQL-specific probing, LFI proof checks, credential SQLi routing, SPA-shell suppression, blocked-response gates, and bounded active-probe concurrency.
 
-DVWA testing also exposed a false time-based SQLi confirmation caused by ordinary latency and a command-injection payload classified through overlapping SQL rules. The timing verifier now requires an explicit delay expression in the payload, and expected attack categories are passed through the queue. DVWA LFI support was added with local-file proof markers, and connection resets after a healthy baseline are preserved as suspected application-impact observations rather than being silently treated as network failures.
+The latest improvement adds open-redirect capability. The request engine can now preserve a 3xx response by disabling redirect following for a specific probe. Redirect-like paths and discovered `redirect` query fields receive an external destination canary. The signature layer confirms the finding only when the response is a 3xx and its `Location` header resolves to a different host. Relative redirects and payload syntax without an external `Location` remain suspected.
 
-DVGA testing exposed that GraphQL was not discovered or tested as GraphQL. The scanner now recognizes `/graphql` and `/graphiql`, retains structured 400 JSON responses as valid API endpoints, submits a structured introspection query, avoids generic REST payloads on GraphQL routes, and stores introspection as informational rather than confirmed vulnerability evidence.
+The improvement was tested against the authorized DVWA training endpoint. A manual request returned HTTP 302 with:
 
-crAPI testing exposed credential-route coverage, SPA-shell false positives, case-sensitive header handling, GET-only XSS method errors, and 405 response noise. Credential SQLi routing, generalized case-normalized shell detection, baseline shell short-circuiting, method-aware XSS dispatch, and a 405 blocked-response gate were added. The final safe scan therefore recorded only baseline header observations and no active-probe false positives.
+```text
+Location: https://example.com/api-security-redirect-check
+```
 
-## Recommended Development Roadmap
+The improved scanner reproduced the same behavior and persisted one confirmed `Open_Redirect` finding with the same external destination. Focused regression coverage increased the suite from 64 to **68 passing tests**, including transport preservation, external-location proof, relative-redirect non-confirmation, and redirect-route selection.
 
-The first priority should be **authenticated, specification-driven scanning**. The platform should accept an OpenAPI document, derive parameter locations and schemas, and optionally run with disposable accounts representing anonymous, ordinary-user, and administrator roles. This foundation enables meaningful BOLA, broken property authorization, mass assignment, JWT, and business-logic testing.
+## Priority Roadmap
 
-The second priority should be **differential proof quality**. Every active probe should have repeated controls, stable response fingerprints, and a proof object that records the exact status, timing distribution, response-size delta, content-type change, and matched marker. Blind SQLi, SSRF, open redirect, rate-limit, and DOM XSS support should build on this evidence model rather than on regex matches alone.
+The highest-priority improvement is **authenticated, specification-driven scanning**. OpenAPI input, disposable account profiles, and multiple principals would unlock reliable BOLA, broken-property authorization, mass assignment, JWT, and business-logic testing. This should be implemented before adding a large number of unrelated payload signatures.
 
-The third priority should be **safe workflow and performance engineering**. Async request scheduling, per-host concurrency limits, adaptive backoff, route-level budgets, authentication-aware cleanup, and explicit state-change approvals would make larger assessments practical without weakening safety. The current sequential design is reliable for bounded training scans but slow on public targets.
+The second priority is **differential proof quality**. Repeated controls, response fingerprints, timing statistics, status transitions, and structured field diffs should become first-class evidence objects. Blind SQLi, rate limiting, SSRF, redirect chains, and authorization checks all depend on this foundation.
 
-The fourth priority should be **model validation and reporting maturity**. A representative labeled dataset should be assembled from intentionally vulnerable applications and clean controls. ML/DL outputs should be calibrated against that dataset, reported as triage signals, and never allowed to promote a result without deterministic proof. Reports should distinguish coverage, attempted checks, blocked checks, inconclusive checks, suspected observations, and confirmed vulnerabilities.
+The third priority is **safe workflow orchestration**. Add per-host rate limits, adaptive backoff, scan cancellation, discovery concurrency, authenticated cleanup, and explicit approval gates for state-changing tests. The current active-probe concurrency improves runtime, but discovery remains predominantly sequential.
+
+The fourth priority is **browser and model validation**. Browser instrumentation is needed for DOM XSS and SPA network discovery. A labeled dataset is needed before ML/DL outputs can be treated as anything more than triage signals.
 
 ## Conclusion
 
-The platform has reached a credible proof-of-concept level for selected unauthenticated API and web checks. It now demonstrates evidence-backed confirmation for DVWA command injection, reflected XSS, and LFI; correct informational handling of DVGA introspection; safe, uncapped read-only coverage on crAPI; and regression protection against the major accuracy defects found during testing. Its principal gap is not another regex rule but the absence of authenticated, state-aware, specification-driven testing. That should be the central direction for the next version.
+The previous gap assessment was directionally correct but stale in two important areas: it did not include open-redirect detection, and it described the scanner as sequential after bounded concurrency had been implemented. This replacement is the current assessment for the latest version.
+
+The scanner now covers selected SQLi, credential SQLi routing, reflected XSS, command injection, LFI, open redirects, limited BOLA/IDOR, authentication weakness indicators, GraphQL introspection, security headers, verbose errors, and sensitive-data patterns. It remains incomplete for authenticated authorization, blind/differential testing, browser-only behavior, stateful business logic, SSRF, file upload, JWT, rate limiting, and other advanced API risks. The recommended method is to improve those areas through authenticated disposable workflows, specification-driven inputs, differential proof objects, strict safety policies, and target-specific regression tests.
 
 ## References
 
@@ -82,8 +108,7 @@ The platform has reached a credible proof-of-concept level for selected unauthen
 [2]: https://owasp.org/API-Security/ "OWASP API Security project"
 [3]: https://owasp.org/API-Security/editions/2023/en/0x11-t10/ "OWASP API Security Top 10 2023"
 [4]: https://owasp.org/www-project-vulnerable-web-applications-directory/ "OWASP Vulnerable Web Applications Directory"
-[5]: ACCURACY_FIX_REPORT.md "Initial accuracy fix report"
-[6]: DVWA_ACCURACY_VERIFICATION_REPORT.md "DVWA verification report"
-[7]: DVWA_LFI_VERIFICATION_SUMMARY.md "DVWA LFI verification summary"
-[8]: DVGA_CROSS_SITE_VERIFICATION_SUMMARY.md "DVGA GraphQL verification summary"
-[9]: CRAPI_VERIFICATION_SUMMARY.md "crAPI verification summary"
+[5]: FINAL_ACCURACY_AND_VERIFICATION_REPORT.md "Final accuracy and cross-target verification report"
+[6]: DVWA_PERFORMANCE_IMPROVEMENT_REPORT.md "DVWA performance improvement and accuracy verification"
+[7]: tests/test_accuracy_regressions.py "Current accuracy regression tests"
+[8]: tests/targeted_main_scan.py "Targeted full-pipeline scan harness"

@@ -3,6 +3,7 @@ import re
 import sys
 from typing import Dict, Any, List, Optional
 from pathlib import Path
+from urllib.parse import urljoin, urlsplit
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -46,6 +47,9 @@ class SignatureDetector:
         "GraphQL_Introspection": [
             r"(?i)__schema",
             r"(?i)__typename"
+        ],
+        "Open_Redirect": [
+            r"(?i)(?:https?://|//)[^\s]+"
         ],
         "BOLA_IDOR": [
             r"/users?/\d+",
@@ -219,11 +223,12 @@ class SignatureDetector:
         if expected_category == "SQL_Injection_Credential":
             expected_category = "SQL_Injection"
         categories = [expected_category] if expected_category in self.REGEX_RULES else []
-        categories += [category for category in ["SQL_Injection", "XSS", "Command_Injection", "Local_File_Inclusion", "GraphQL_Introspection", "Auth_Weakness", "BOLA_IDOR"] if category != expected_category]
+        categories += [category for category in ["SQL_Injection", "XSS", "Command_Injection", "Local_File_Inclusion", "GraphQL_Introspection", "Open_Redirect", "Auth_Weakness", "BOLA_IDOR"] if category != expected_category]
         for category in categories:
             rules = self.REGEX_RULES.get(category, [])
             for rule in rules:
-                if re.search(rule, payload) or re.search(rule, combined_probe_text):
+                probe_match = re.search(rule, payload) if category == "Open_Redirect" else (re.search(rule, payload) or re.search(rule, combined_probe_text))
+                if probe_match:
                     candidate_category = category
                     candidate_rule = rule
                     break
@@ -310,6 +315,26 @@ class SignatureDetector:
                     confidence = "Low"
                     points = 10
                     proof_of_concept = "GraphQL endpoint accepted an introspection probe without schema proof"
+
+            elif candidate_category == "Open_Redirect":
+                location = next((str(value) for key, value in resp_headers.items() if str(key).lower() == "location"), "")
+                resolved_location = urlsplit(urljoin(url, location)) if location else None
+                base_location = urlsplit(url)
+                is_external = bool(resolved_location and resolved_location.netloc and resolved_location.netloc != base_location.netloc)
+                if 300 <= int(resp_status or 0) < 400 and is_external:
+                    matched = True
+                    has_proof = True
+                    finding_status = "Confirmed"
+                    confidence = "High"
+                    points = 40
+                    proof_of_concept = f"External redirect confirmed via Location header: {location}"
+                else:
+                    matched = True
+                    has_proof = False
+                    finding_status = "Suspected"
+                    confidence = "Low"
+                    points = 10
+                    proof_of_concept = "Redirect payload matched without an external 3xx Location response"
 
             elif candidate_category == "Local_File_Inclusion":
                 matched_lfi_sig = next((pattern for pattern in self.LFI_OUTPUT_PATTERNS if re.search(pattern, resp_body)), None)
