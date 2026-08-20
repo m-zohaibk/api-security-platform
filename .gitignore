@@ -41,3 +41,16 @@ reports/*.html
 .vscode/
 .idea/
 .DS_Store
+
+# Local security-test session artifacts (keep source tests and regression fixtures tracked)
+tests/*_manual_*.json
+tests/*_manual_*.py
+tests/*_results.json
+tests/*_inventory.json
+tests/*_inventory.py
+tests/*_comparison.json
+tests/*_compare.py
+tests/target_selection_*.md
+tests/real_target_validation.md
+tests/manual_dvwa_xss_*
+tests/*_landing.html
