@@ -21,6 +21,7 @@ class SignatureDetector:
         "SQL_Injection": [
             r"(?i)(\b(SELECT|INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|EXEC|UNION|HAVING)\b)",
             r"(?i)('|\"|;|\bOR\b|\bAND\b)\s*1\s*=\s*1",
+            r"(?i)(?:'|\")\s*(?:OR|AND)\s*(?:'|\")?\s*\d+\s*(?:'|\")?\s*=\s*(?:'|\")?\s*\d+",
             r"(?i)--\s*$",
             r"(?i)\bSLEEP\s*\(\s*\d+\s*\)",
             r"(?i)\bBENCHMARK\s*\("
@@ -37,6 +38,14 @@ class SignatureDetector:
             r"\|\s*(cat|ls|whoami|id|pwd|uname)\b",
             r"`.*`",
             r"\$\(.*\)"
+        ],
+        "Local_File_Inclusion": [
+            r"(?i)(?:\.\./){2,}[^\s]+",
+            r"(?i)(?:php|file|data)://"
+        ],
+        "GraphQL_Introspection": [
+            r"(?i)__schema",
+            r"(?i)__typename"
         ],
         "BOLA_IDOR": [
             r"/users?/\d+",
@@ -67,6 +76,13 @@ class SignatureDetector:
         r"uid=\d+\(.*\)\s+gid=\d+",
         r"Linux\s+[\w\.-]+\s+\d+\.\d+",
         r"Windows\s+IP\s+Configuration"
+    ]
+
+    LFI_OUTPUT_PATTERNS = [
+        r"root:x:0:0:",
+        r"daemon:x:\d+:",
+        r"nobody:x:\d+:",
+        r"\[boot loader\]"
     ]
 
     REQUIRED_SECURITY_HEADERS = [
@@ -131,8 +147,25 @@ class SignatureDetector:
         target_string = f"{url} {payload}"
         content_type = str(resp_headers.get("content-type", "") or resp_headers.get("Content-Type", "")).lower()
 
-        # Hard Response Gate 1: Network / Unreachable / Status 0 or None
+        # Hard Response Gate 1: Network / Unreachable / Status 0 or None.
+        # If the baseline was healthy and only the active probe disconnected,
+        # preserve that differential as a suspected request-impact signal.
         if resp_status in [0, None]:
+            baseline_status = (baseline_telemetry or {}).get("status_code")
+            baseline_reachable = baseline_status is not None and 200 <= int(baseline_status) < 500 and baseline_status != 404
+            if baseline_reachable and payload:
+                return {
+                    "matched": True,
+                    "has_proof": False,
+                    "is_vulnerable": False,
+                    "attack_type": "Application_Connection_Reset",
+                    "pattern_matched": "Active payload caused target connection reset",
+                    "finding_status": "Suspected",
+                    "confidence": "Low",
+                    "points": 10,
+                    "proof_of_concept": "Target disconnected during an active probe after a healthy baseline; exploit proof not established",
+                    "missing_headers": []
+                }
             return {
                 "matched": False,
                 "has_proof": False,
@@ -146,8 +179,22 @@ class SignatureDetector:
                 "missing_headers": []
             }
 
+        if telemetry_data.get("frontend_shell_response"):
+            return {
+                "matched": False,
+                "has_proof": False,
+                "is_vulnerable": False,
+                "attack_type": "None",
+                "pattern_matched": "Frontend SPA shell returned for API-path probe",
+                "finding_status": "Informational",
+                "confidence": "High",
+                "points": 0,
+                "proof_of_concept": "Payload was not processed by an API; target returned the frontend shell",
+                "missing_headers": []
+            }
+
         # Hard Response Gate 2: WAF Block / Edge Block / 404 Not Found
-        if resp_status in [403, 404, 429, 502, 503, 504] or (resp_status == 202 and resp_size == 0):
+        if resp_status in [403, 404, 405, 429, 502, 503, 504] or (resp_status == 202 and resp_size == 0):
             status_desc = "Resource Not Found" if resp_status == 404 else "WAF / Edge Block"
             return {
                 "matched": False,
@@ -168,7 +215,12 @@ class SignatureDetector:
         auth_header_val = telemetry_data.get("request_headers", {}).get("Authorization", "")
         combined_probe_text = f"{target_string} {auth_header_val}"
 
-        for category in ["SQL_Injection", "XSS", "Command_Injection", "Auth_Weakness", "BOLA_IDOR"]:
+        expected_category = telemetry_data.get("attack_category")
+        if expected_category == "SQL_Injection_Credential":
+            expected_category = "SQL_Injection"
+        categories = [expected_category] if expected_category in self.REGEX_RULES else []
+        categories += [category for category in ["SQL_Injection", "XSS", "Command_Injection", "Local_File_Inclusion", "GraphQL_Introspection", "Auth_Weakness", "BOLA_IDOR"] if category != expected_category]
+        for category in categories:
             rules = self.REGEX_RULES.get(category, [])
             for rule in rules:
                 if re.search(rule, payload) or re.search(rule, combined_probe_text):
@@ -227,13 +279,13 @@ class SignatureDetector:
                     confidence = "High"
                     points = 40
                     proof_of_concept = f"SQL Error signature matched: {matched_sql_err}"
-                elif time_delta > 3.0:
+                elif time_delta > 3.0 and re.search(r"(?i)\b(?:sleep|benchmark|pg_sleep|waitfor\s+delay)\s*\(", payload):
                     matched = True
                     has_proof = True
                     finding_status = "Confirmed"
                     confidence = "High"
                     points = 40
-                    proof_of_concept = f"Time-based SQLi response delay detected: {time_delta:.2f}s > 3.00s"
+                    proof_of_concept = f"Time-based SQLi response delay detected for an explicit delay payload: {time_delta:.2f}s > 3.00s"
                 else:
                     matched = True
                     has_proof = False
@@ -241,6 +293,40 @@ class SignatureDetector:
                     confidence = "Low"
                     points = 10
                     proof_of_concept = "SQL parameter payload syntax matched without database error or execution time delay"
+
+            elif candidate_category == "GraphQL_Introspection":
+                matched_graphql = bool(re.search(r'(?i)"__schema"|"queryType"|"__typename"', resp_body))
+                if matched_graphql and resp_status in {200, 400} and resp_size > 0:
+                    matched = True
+                    has_proof = False
+                    finding_status = "Informational"
+                    confidence = "High"
+                    points = 0
+                    proof_of_concept = "GraphQL introspection response exposed schema metadata"
+                else:
+                    matched = True
+                    has_proof = False
+                    finding_status = "Suspected"
+                    confidence = "Low"
+                    points = 10
+                    proof_of_concept = "GraphQL endpoint accepted an introspection probe without schema proof"
+
+            elif candidate_category == "Local_File_Inclusion":
+                matched_lfi_sig = next((pattern for pattern in self.LFI_OUTPUT_PATTERNS if re.search(pattern, resp_body)), None)
+                if matched_lfi_sig and resp_status == 200 and resp_size > 0:
+                    matched = True
+                    has_proof = True
+                    finding_status = "Confirmed"
+                    confidence = "High"
+                    points = 40
+                    proof_of_concept = f"Local file content signature matched: {matched_lfi_sig}"
+                else:
+                    matched = True
+                    has_proof = False
+                    finding_status = "Suspected"
+                    confidence = "Low"
+                    points = 10
+                    proof_of_concept = "File traversal syntax matched without known local-file content"
 
             elif candidate_category == "Command_Injection":
                 # Shell output signature OR Time-based delay > 3.0s
@@ -289,7 +375,7 @@ class SignatureDetector:
             elif candidate_category == "BOLA_IDOR":
                 auth_header = telemetry_data.get("request_headers", {}).get("Authorization", "")
                 has_sensitive_data = any(re.search(pat, resp_body, re.I) for pat in [r"\"email\":", r"\"ssn\":", r"\"password\":", r"\"role\":", r"\"token\":", r"\"username\":"])
-                if resp_status in [200, 201] and (has_sensitive_data or not auth_header):
+                if resp_status in [200, 201] and has_sensitive_data and not auth_header:
                     matched = True
                     has_proof = True
                     finding_status = "Confirmed"
@@ -310,7 +396,7 @@ class SignatureDetector:
             auth_header = telemetry_data.get("request_headers", {}).get("Authorization", "")
             has_sensitive_data = any(re.search(pat, resp_body, re.I) for pat in [r"\"email\":", r"\"ssn\":", r"\"password\":", r"\"role\":", r"\"token\":", r"\"username\":"])
 
-            if has_bola_pattern and (has_sensitive_data or not auth_header):
+            if has_bola_pattern and has_sensitive_data and not auth_header:
                 matched = True
                 has_proof = True
                 attack_type = "BOLA_IDOR"
@@ -321,7 +407,7 @@ class SignatureDetector:
                 proof_of_concept = "Unauthorized object access returned sensitive object properties in 200 OK body"
 
         # Verbose Stack Traces Verification
-        if not matched and resp_status not in [404, 401, 403, 429, 502, 503, 504]:
+        if not matched and resp_status not in [404, 401, 403, 405, 429, 502, 503, 504]:
             for err_pat in self.VERBOSE_ERROR_PATTERNS:
                 if re.search(err_pat, resp_body):
                     matched = True
@@ -335,7 +421,7 @@ class SignatureDetector:
                     break
 
         # Sensitive Data Exposure Verification
-        if not matched and resp_status not in [404, 401, 403, 429, 502, 503, 504]:
+        if not matched and resp_status not in [404, 401, 403, 405, 429, 502, 503, 504]:
             for sens_pat in self.SENSITIVE_DATA_PATTERNS:
                 if re.search(sens_pat, resp_body):
                     matched = True
@@ -355,7 +441,7 @@ class SignatureDetector:
             if req_h.lower() not in resp_headers_lower:
                 missing_headers.append(req_h)
 
-        if not matched and missing_headers and resp_status not in [404, 401, 403, 406, 429, 502, 503, 504]:
+        if not matched and missing_headers and resp_status not in [404, 401, 403, 405, 406, 429, 502, 503, 504] and not (500 <= int(resp_status or 0) < 600):
             matched = True
             has_proof = False  # Header misconfigurations do not constitute injection exploit proof
             attack_type = "Security_Misconfiguration"

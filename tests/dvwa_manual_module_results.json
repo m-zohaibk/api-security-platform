@@ -1,0 +1,88 @@
+{
+  "sqli": {
+    "control": {
+      "status": 200,
+      "elapsed": 4.0345,
+      "size": 461,
+      "headers": {
+        "server": "nginx/1.31.4",
+        "date": "Thu, 20 Aug 2026 06:55:13 GMT",
+        "content-type": "text/html; charset=UTF-8",
+        "content-length": "271",
+        "connection": "keep-alive",
+        "x-powered-by": "PHP/8.5.9",
+        "set-cookie": "security=low; path=/, PHPSESSID=c3aa5db14966b794f9bdcbe63b038164; expires=Fri, 21 Aug 2026 06:55:13 GMT; Max-Age=86400; path=/",
+        "expires": "Thu, 19 Nov 1981 08:52:00 GMT",
+        "cache-control": "no-store, no-cache, must-revalidate",
+        "pragma": "no-cache",
+        "vary": "Accept-Encoding",
+        "content-encoding": "gzip"
+      },
+      "error": null
+    },
+    "probe": {
+      "status": 200,
+      "elapsed": 0.7448,
+      "size": 461,
+      "headers": {
+        "server": "nginx/1.31.4",
+        "date": "Thu, 20 Aug 2026 06:55:14 GMT",
+        "content-type": "text/html; charset=UTF-8",
+        "content-length": "271",
+        "connection": "keep-alive",
+        "x-powered-by": "PHP/8.5.9",
+        "expires": "Thu, 19 Nov 1981 08:52:00 GMT",
+        "cache-control": "no-store, no-cache, must-revalidate",
+        "pragma": "no-cache",
+        "vary": "Accept-Encoding",
+        "content-encoding": "gzip"
+      },
+      "error": null
+    },
+    "probe_has_database_error": true,
+    "probe_has_multiple_user_rows": false,
+    "response_delta": 0
+  },
+  "command_injection": {
+    "control": {
+      "status": 200,
+      "elapsed": 4.6501,
+      "size": 4529,
+      "headers": {
+        "server": "nginx/1.31.4",
+        "date": "Thu, 20 Aug 2026 06:55:18 GMT",
+        "content-type": "text/html;charset=utf-8",
+        "content-length": "1531",
+        "connection": "keep-alive",
+        "x-powered-by": "PHP/8.5.9",
+        "expires": "Tue, 23 Jun 2009 12:00:00 GMT",
+        "cache-control": "no-cache, must-revalidate",
+        "pragma": "no-cache",
+        "vary": "Accept-Encoding",
+        "content-encoding": "gzip"
+      },
+      "error": null
+    },
+    "probe": {
+      "status": 200,
+      "elapsed": 4.6709,
+      "size": 5368,
+      "headers": {
+        "server": "nginx/1.31.4",
+        "date": "Thu, 20 Aug 2026 06:55:22 GMT",
+        "content-type": "text/html;charset=utf-8",
+        "content-length": "1826",
+        "connection": "keep-alive",
+        "x-powered-by": "PHP/8.5.9",
+        "expires": "Tue, 23 Jun 2009 12:00:00 GMT",
+        "cache-control": "no-cache, must-revalidate",
+        "pragma": "no-cache",
+        "vary": "Accept-Encoding",
+        "content-encoding": "gzip"
+      },
+      "error": null
+    },
+    "probe_has_passwd_marker": true,
+    "response_delta": 839
+  }
+}

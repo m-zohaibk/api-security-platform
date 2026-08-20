@@ -81,7 +81,7 @@ class ResponseParser:
 
         url_str = response_data.get("url", "")
         parsed_url = urlparse(url_str)
-        
+
         # Path depth & URL length
         path_segments = [seg for seg in parsed_url.path.split("/") if seg]
         path_depth = len(path_segments)
@@ -89,7 +89,7 @@ class ResponseParser:
 
         # Query string analysis
         query_string = parsed_url.query
-        query_params = parse_qs(query_string)
+        query_params = parse_qs(query_string, keep_blank_values=True)
         query_param_count = len(query_params)
         query_string_length = len(query_string)
 

@@ -47,7 +47,7 @@ class RiskScorer:
             1 if ml_is_anomaly else 0,
             1 if dl_is_suspicious else 0
         ])
-        
+
         if layers_triggered == 3:
             return 1.0, layers_triggered    # All three agree - high conf
         elif layers_triggered == 2:
@@ -150,24 +150,32 @@ class RiskScorer:
         lstm_points = min(float(dl_result.get("lstm_points", 0.0)), self.MAX_LSTM_POINTS)
         ae_points = min(float(dl_result.get("autoencoder_points", 0.0)), self.MAX_AE_POINTS)
 
-        # Triggered Layer Conditions
-        has_proof = bool(signature_result.get("has_proof", False) or signature_result.get("matched", False) or signature_result.get("is_vulnerable", False))
+        # Triggered Layer Conditions. A signature match is a detection signal;
+        # proof is a stricter condition that is required before declaring a
+        # vulnerability. Keeping these concepts separate prevents suspected
+        # payload matches from being reported as confirmed findings.
+        signature_triggered = bool(signature_result.get("matched", False) or signature_result.get("is_vulnerable", False))
+        has_proof = bool(signature_result.get("has_proof", False) or signature_result.get("is_vulnerable", False))
         sig_points_raw = float(signature_result.get("points", 0.0))
-        sig_points = min(sig_points_raw, self.MAX_SIG_POINTS) if has_proof else 0.0
+        sig_points = min(sig_points_raw, self.MAX_SIG_POINTS) if signature_triggered else 0.0
 
         ml_is_anomaly = bool(ml_result.get("is_anomaly", False) or ml_points >= 10.0)
         dl_is_suspicious = bool(dl_result.get("is_anomaly", False) or (lstm_points + ae_points) >= 10.0 or dl_result.get("lstm_probability", 0.0) > 0.5)
 
-        # Calculate hybrid confidence multiplier
-        confidence, layers_triggered = self.calculate_hybrid_confidence(has_proof, ml_is_anomaly, dl_is_suspicious)
+        # Calculate hybrid confidence multiplier from layer detections, not
+        # from proof alone. This preserves anomaly triage while keeping the
+        # final vulnerability flag evidence-based.
+        confidence, layers_triggered = self.calculate_hybrid_confidence(signature_triggered, ml_is_anomaly, dl_is_suspicious)
 
         # Calculate combined total score with confidence weighting
         raw_total = sig_points + ml_points + lstm_points + ae_points
         final_risk_score = round(min(self.MAX_TOTAL_POINTS, raw_total * confidence), 2)
         severity = self.classify_severity(final_risk_score)
 
-        is_vulnerable = has_proof or final_risk_score >= 40.0
-        if has_proof and layers_triggered >= 2:
+        # A high anomaly score is useful for triage, but it is not exploit
+        # proof. Only a verified response indicator is a vulnerability.
+        is_vulnerable = has_proof
+        if has_proof:
             finding_status = "Confirmed"
         elif final_risk_score > 0.0:
             finding_status = "Suspected"
@@ -178,14 +186,15 @@ class RiskScorer:
         recommendation = self.SEVERITY_RECOMMENDATIONS.get(rec_key, self.SEVERITY_RECOMMENDATIONS["Low"])
         timestamp = datetime.utcnow().isoformat() + "Z"
 
-        proof_poc = signature_result.get("proof_of_concept", "")
-        if not proof_poc:
-            if has_proof:
-                proof_poc = "Vulnerability signature verified with active response indicators"
-            elif final_risk_score > 0.0:
-                proof_poc = f"Multi-layer anomaly score ({final_risk_score}/100) triggered by {layers_triggered}/3 detection layers"
-            else:
-                proof_poc = "No vulnerability or anomaly criteria met"
+        proof_poc = ""
+        if has_proof:
+            proof_poc = signature_result.get("proof_of_concept", "") or "Vulnerability signature verified with active response indicators"
+        elif signature_triggered:
+            proof_poc = signature_result.get("proof_of_concept", "") or signature_result.get("pattern_matched", "Signature matched without proof")
+        elif final_risk_score > 0.0:
+            proof_poc = f"Multi-layer anomaly score ({final_risk_score}/100) triggered by {layers_triggered}/3 detection layers; exploit proof not established"
+        else:
+            proof_poc = "No vulnerability or anomaly criteria met"
 
         result_summary = {
             "endpoint": endpoint_url,
@@ -225,7 +234,7 @@ class RiskScorer:
 
 if __name__ == "__main__":
     scorer = RiskScorer()
-    
+
     mock_sig = {"matched": True, "attack_type": "SQL_Injection", "points": 90, "pattern_matched": "1=1"}
     mock_ml = {"is_anomaly": True, "anomaly_score": 0.65, "points": 26.0}
     mock_dl = {"lstm_probability": 0.85, "lstm_points": 25.5, "autoencoder_points": 18.0}

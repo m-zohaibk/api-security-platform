@@ -1,0 +1,89 @@
+{
+  "target": "http://testasp.vulnweb.com",
+  "platform_overall_score": 3.5,
+  "platform_vulnerabilities_found": 0,
+  "platform_status_counts": {
+    "Suspected": 20,
+    "UNREACHABLE / NETWORK_DROPPED": 10
+  },
+  "manual_max_score": 3.5,
+  "manual_confirmed_count": 0,
+  "all_scores_match": true,
+  "rows": [
+    {
+      "endpoint": "http://testasp.vulnweb.com",
+      "platform_scores": [
+        0.0,
+        3.5
+      ],
+      "platform_statuses": [
+        "Suspected",
+        "UNREACHABLE / NETWORK_DROPPED"
+      ],
+      "platform_finding_count": 6,
+      "manual_score": 3.5,
+      "manual_transport_errors": 2,
+      "platform_score_delta": 0.0
+    },
+    {
+      "endpoint": "http://testasp.vulnweb.com/Templatize.asp?item=html/about.html",
+      "platform_scores": [
+        0.0,
+        3.5
+      ],
+      "platform_statuses": [
+        "Suspected",
+        "UNREACHABLE / NETWORK_DROPPED"
+      ],
+      "platform_finding_count": 6,
+      "manual_score": 3.5,
+      "manual_transport_errors": 2,
+      "platform_score_delta": 0.0
+    },
+    {
+      "endpoint": "http://testasp.vulnweb.com/Default.asp",
+      "platform_scores": [
+        0.0,
+        3.5
+      ],
+      "platform_statuses": [
+        "Suspected",
+        "UNREACHABLE / NETWORK_DROPPED"
+      ],
+      "platform_finding_count": 6,
+      "manual_score": 3.5,
+      "manual_transport_errors": 2,
+      "platform_score_delta": 0.0
+    },
+    {
+      "endpoint": "http://testasp.vulnweb.com/Search.asp",
+      "platform_scores": [
+        0.0,
+        3.5
+      ],
+      "platform_statuses": [
+        "Suspected",
+        "UNREACHABLE / NETWORK_DROPPED"
+      ],
+      "platform_finding_count": 6,
+      "manual_score": 3.5,
+      "manual_transport_errors": 2,
+      "platform_score_delta": 0.0
+    },
+    {
+      "endpoint": "http://testasp.vulnweb.com/Login.asp?RetURL=%2FSearch%2Easp%3F",
+      "platform_scores": [
+        0.0,
+        3.5
+      ],
+      "platform_statuses": [
+        "Suspected",
+        "UNREACHABLE / NETWORK_DROPPED"
+      ],
+      "platform_finding_count": 6,
+      "manual_score": 3.5,
+      "manual_transport_errors": 3,
+      "platform_score_delta": 0.0
+    }
+  ]
+}

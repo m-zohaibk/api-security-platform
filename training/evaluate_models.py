@@ -43,7 +43,7 @@ class PlatformEvaluator:
         self.processed_dir = Path(DATASETS_DIR) / "processed"
         self.test_csv_path = Path(test_csv_path) if test_csv_path else self.processed_dir / "test.csv"
         self.vampi_url = vampi_url.rstrip("/")
-        
+
         self.parser = ResponseParser()
         self.signature_detector = SignatureDetector()
         self.ml_detector = MLAnomalyDetector()
@@ -54,11 +54,12 @@ class PlatformEvaluator:
         logger.info("Evaluating detection layers against test dataset...")
 
         timings = []
+        evaluation_status = "dataset_loaded"
         if not self.test_csv_path.exists():
-            logger.warning("Test dataset CSV not found. Using baseline fallback.")
-            y_true = np.array([0, 1, 0, 1])
-            y_l1, y_l2, y_l3, y_comb = y_true, y_true, y_true, y_true
-            timings = [0.005, 0.006, 0.007, 0.005]
+            logger.warning("Test dataset CSV not found. Dataset metrics will be marked unavailable.")
+            evaluation_status = "dataset_missing"
+            y_true = np.array([], dtype=int)
+            y_l1, y_l2, y_l3, y_comb = [], [], [], []
         else:
             test_df = pd.read_csv(self.test_csv_path).fillna(0.0)
             y_true = test_df["label"].values
@@ -107,6 +108,13 @@ class PlatformEvaluator:
                 y_comb.append(comb_pred)
 
         def calc_metrics(y_real, y_pred_vals):
+            if len(y_real) == 0:
+                return {
+                    "precision": None,
+                    "recall": None,
+                    "f1_score": None,
+                    "false_positive_rate": None
+                }
             prec = precision_score(y_real, y_pred_vals, zero_division=0)
             rec = recall_score(y_real, y_pred_vals, zero_division=0)
             f1 = f1_score(y_real, y_pred_vals, zero_division=0)
@@ -196,7 +204,7 @@ class PlatformEvaluator:
                 dl = self.dl_detector.analyze(s["payload"], feat)
                 risk = self.risk_scorer.calculate_risk(sig, ml, dl, s["url"], s["method"])
 
-                if risk["total_score"] >= 15.0 or sig.get("matched") or sig.get("has_proof"):
+                if risk.get("is_vulnerable", False):
                     detected_count += 1
 
             per_category_detection[category] = {
@@ -257,23 +265,34 @@ class PlatformEvaluator:
                 dl = self.dl_detector.analyze(s["payload"], feat)
                 risk = self.risk_scorer.calculate_risk(sig, ml, dl, s["url"], s["method"])
 
-                # Clean request falsely flagged as High/Critical or having active attack proof
-                if risk["total_score"] >= 40.0 or sig.get("has_proof"):
+                # A clean request is a false positive only when the pipeline
+                # claims exploit proof, not merely when it receives a triage score.
+                if risk.get("is_vulnerable", False):
                     fp_count += 1
 
             per_method_fpr[ep_type] = round((fp_count / len(samples)) * 100, 2)
 
         # 3. Scan performance per request (latency percentiles)
-        timings_array = np.array(timings) if timings else np.array([0.005])
-        scan_performance = {
-            "avg_sec": round(float(np.mean(timings_array)), 4),
-            "min_sec": round(float(np.min(timings_array)), 4),
-            "max_sec": round(float(np.max(timings_array)), 4),
-            "p95_sec": round(float(np.percentile(timings_array, 95)), 4)
-        }
+        if timings:
+            timings_array = np.array(timings)
+            scan_performance = {
+                "status": "completed",
+                "avg_sec": round(float(np.mean(timings_array)), 4),
+                "min_sec": round(float(np.min(timings_array)), 4),
+                "max_sec": round(float(np.max(timings_array)), 4),
+                "p95_sec": round(float(np.percentile(timings_array, 95)), 4)
+            }
+        else:
+            scan_performance = {
+                "status": "unavailable",
+                "avg_sec": None,
+                "min_sec": None,
+                "max_sec": None,
+                "p95_sec": None
+            }
 
         # 4. End-to-end live performance on VAmPI
-        vampi_live_results = {"endpoints_tested": 0, "true_positives": 0, "false_positives": 0, "clean_endpoints": 0, "details": []}
+        vampi_live_results = {"status": "not_run", "endpoints_tested": 0, "true_positives": 0, "false_positives": 0, "clean_endpoints": 0, "details": []}
         try:
             with httpx.Client(timeout=3.0, follow_redirects=True) as client:
                 r_root = client.get(self.vampi_url)
@@ -313,7 +332,7 @@ class PlatformEvaluator:
                         dl = self.dl_detector.analyze(body, feat)
                         risk = self.risk_scorer.calculate_risk(sig, ml, dl, target, route["method"])
 
-                        is_flagged = bool(risk["total_score"] >= 15.0 or sig.get("matched") or sig.get("has_proof"))
+                        is_flagged = bool(risk.get("is_vulnerable", False))
 
                         if route["is_vuln_expected"]:
                             if is_flagged:
@@ -332,13 +351,14 @@ class PlatformEvaluator:
                             "expected_vulnerable": route["is_vuln_expected"]
                         })
 
+                    vampi_live_results["status"] = "completed"
                     vampi_live_results["endpoints_tested"] = len(vampi_routes)
                     vampi_live_results["true_positives"] = tp
                     vampi_live_results["false_positives"] = fp
                     vampi_live_results["clean_endpoints"] = clean
         except Exception as exc:
             logger.warning(f"Could not perform live VAmPI scan evaluation: {exc}")
-            vampi_live_results = {"endpoints_tested": 7, "true_positives": 6, "false_positives": 0, "clean_endpoints": 1}
+            vampi_live_results = {"status": "unavailable", "endpoints_tested": 0, "true_positives": 0, "false_positives": 0, "clean_endpoints": 0, "details": []}
 
         # OWASP coverage
         owasp_test_cases = {
@@ -356,11 +376,35 @@ class PlatformEvaluator:
 
         owasp_coverage = {}
         for cat, samples in owasp_test_cases.items():
-            correct = sum(1 for s in samples)
-            owasp_coverage[cat] = {"detected": True, "correct_count": correct, "missed_count": 0, "fp_count": 0}
+            correct = 0
+            for s in samples:
+                req = {
+                    "method": s["method"],
+                    "url": s["url"],
+                    "payload": s["payload"],
+                    "status_code": s.get("status_code", 200),
+                    "response_size": len(s.get("body", "")),
+                    "response_body": s.get("body", ""),
+                    "request_headers": s.get("headers", {}),
+                    "response_headers": s.get("response_headers", s.get("headers", {}))
+                }
+                feat = self.parser.extract_features(req)
+                sig = self.signature_detector.analyze(req)
+                ml = self.ml_detector.predict(feat)
+                dl = self.dl_detector.analyze(s["payload"], feat)
+                risk = self.risk_scorer.calculate_risk(sig, ml, dl, s["url"], s["method"], telemetry_data=req)
+                if risk.get("is_vulnerable", False):
+                    correct += 1
+            owasp_coverage[cat] = {
+                "detected": correct == len(samples),
+                "correct_count": correct,
+                "missed_count": len(samples) - correct,
+                "fp_count": 0
+            }
 
         results_payload = {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "evaluation_status": evaluation_status,
             "layer_1_signature": l1_metrics,
             "layer_2_ml_isolation_forest": l2_metrics,
             "layer_3_deep_learning": l3_metrics,
@@ -372,12 +416,14 @@ class PlatformEvaluator:
                 "AUTHENTICATED": per_method_fpr["AUTHENTICATED"]
             },
             "scan_performance": {
+                "status": scan_performance["status"],
                 "avg_sec": scan_performance["avg_sec"],
                 "min_sec": scan_performance["min_sec"],
                 "max_sec": scan_performance["max_sec"],
                 "p95_sec": scan_performance["p95_sec"]
             },
             "vampi_live_results": {
+                "status": vampi_live_results["status"],
                 "endpoints_tested": vampi_live_results["endpoints_tested"],
                 "true_positives": vampi_live_results["true_positives"],
                 "false_positives": vampi_live_results["false_positives"],

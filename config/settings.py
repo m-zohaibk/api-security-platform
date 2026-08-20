@@ -18,7 +18,7 @@ DATABASE_URL = os.getenv(
 )
 
 # Inspection Engine Limits
-MAX_ENDPOINTS = int(os.getenv("MAX_ENDPOINTS", 50))
+MAX_ENDPOINTS = int(os.getenv("MAX_ENDPOINTS", 20))
 SCAN_TIMEOUT = int(os.getenv("SCAN_TIMEOUT", 30))
 
 # Logging Configuration

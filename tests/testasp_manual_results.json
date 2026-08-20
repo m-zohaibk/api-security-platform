@@ -1,0 +1,83 @@
+{
+  "target": "http://testasp.vulnweb.com",
+  "endpoint_count": 5,
+  "manual_confirmed_count": 0,
+  "manual_max_score": 3.5,
+  "rows": [
+    {
+      "endpoint": "http://testasp.vulnweb.com",
+      "baseline_status": 200,
+      "baseline_size": 3542,
+      "missing_security_headers": [
+        "content-security-policy",
+        "x-content-type-options",
+        "x-frame-options",
+        "strict-transport-security"
+      ],
+      "confirmed_categories": [],
+      "manual_confirmed": false,
+      "manual_score": 3.5,
+      "transport_errors": 2
+    },
+    {
+      "endpoint": "http://testasp.vulnweb.com/Templatize.asp?item=html/about.html",
+      "baseline_status": 200,
+      "baseline_size": 4594,
+      "missing_security_headers": [
+        "content-security-policy",
+        "x-content-type-options",
+        "x-frame-options",
+        "strict-transport-security"
+      ],
+      "confirmed_categories": [],
+      "manual_confirmed": false,
+      "manual_score": 3.5,
+      "transport_errors": 2
+    },
+    {
+      "endpoint": "http://testasp.vulnweb.com/Default.asp",
+      "baseline_status": 200,
+      "baseline_size": 3542,
+      "missing_security_headers": [
+        "content-security-policy",
+        "x-content-type-options",
+        "x-frame-options",
+        "strict-transport-security"
+      ],
+      "confirmed_categories": [],
+      "manual_confirmed": false,
+      "manual_score": 3.5,
+      "transport_errors": 2
+    },
+    {
+      "endpoint": "http://testasp.vulnweb.com/Search.asp",
+      "baseline_status": 200,
+      "baseline_size": 2809,
+      "missing_security_headers": [
+        "content-security-policy",
+        "x-content-type-options",
+        "x-frame-options",
+        "strict-transport-security"
+      ],
+      "confirmed_categories": [],
+      "manual_confirmed": false,
+      "manual_score": 3.5,
+      "transport_errors": 2
+    },
+    {
+      "endpoint": "http://testasp.vulnweb.com/Login.asp?RetURL=%2FSearch%2Easp%3F",
+      "baseline_status": 200,
+      "baseline_size": 3196,
+      "missing_security_headers": [
+        "content-security-policy",
+        "x-content-type-options",
+        "x-frame-options",
+        "strict-transport-security"
+      ],
+      "confirmed_categories": [],
+      "manual_confirmed": false,
+      "manual_score": 3.5,
+      "transport_errors": 3
+    }
+  ]
+}

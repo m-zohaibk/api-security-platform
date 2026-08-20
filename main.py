@@ -1,6 +1,7 @@
 import argparse
 import sys
 import os
+from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict, Any
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -15,6 +16,98 @@ from detection.deep_learning import DeepLearningDetector
 from detection.risk_scorer import RiskScorer
 from database.db import init_db, SessionLocal, save_scan_session, save_endpoint, save_finding, complete_scan_session
 from database.models import ScanSession, Endpoint, Finding, Report
+from config.settings import MAX_ENDPOINTS, SCAN_TIMEOUT
+from urllib.parse import urlsplit, urlunsplit
+
+ACTIVE_CONCURRENCY = max(1, int(os.getenv("ACTIVE_CONCURRENCY", "4")))
+
+
+def _is_frontend_shell_response(url: str, response_headers: Dict[str, Any], response_body: str, payload: str = "") -> bool:
+    normalized_headers = {str(key).lower(): value for key, value in (response_headers or {}).items()}
+    content_type = str(normalized_headers.get("content-type", "")).lower()
+    if "text/html" not in content_type:
+        return False
+    body_lower = response_body.lower()
+    markers = ("<div id=\"root\"", "<div id=\"app\"", "<div id=\"__next\"")
+    if not any(marker in body_lower for marker in markers):
+        return False
+    # Preserve genuine reflection checks for SPA applications that put the payload in the HTML shell.
+    return not payload or payload.lower() not in body_lower
+
+
+def _is_safe_read_only_endpoint(ep_info: Dict[str, Any]) -> bool:
+    method = (ep_info.get("method") or "GET").upper()
+    path = urlsplit(ep_info.get("url", "")).path.lower()
+    if method not in {"GET", "HEAD", "OPTIONS"}:
+        return False
+    excluded_tokens = ("/login", "/signup", "/register", "/forgot", "/password", "/refresh", "/delete", "/remove", "/create", "/update", "/verify")
+    return not any(token in path for token in excluded_tokens)
+
+
+def _bind_payload_to_endpoint(ep_info: Dict[str, Any], method: str, payload: str):
+    """Return named query/form data for endpoints discovered from HTML forms."""
+    fields = [field for field in (ep_info.get("form_fields") or []) if field]
+    query_fields = [field for field in (ep_info.get("query_fields") or []) if field]
+    defaults = dict(ep_info.get("form_defaults") or {})
+    if fields and method.upper() in ["GET", "DELETE"]:
+        values = {field: defaults.get(field, "") for field in fields}
+        values[fields[0]] = payload
+        return values, None
+    if fields and method.upper() in ["POST", "PUT", "PATCH"]:
+        values = {key: value for key, value in defaults.items()}
+        for field in fields:
+            values.setdefault(field, "")
+        values[fields[0]] = payload
+        return None, values
+    if query_fields and method.upper() in ["GET", "DELETE"]:
+        values = {field: "" for field in query_fields}
+        values[query_fields[0]] = payload
+        return values, None
+    return None, None
+
+
+def _select_test_queue(ep_info: Dict[str, Any], active_test_queue: List[Dict[str, Any]]):
+    """Select a bounded, non-destructive probe set for an endpoint/module."""
+    path = urlsplit(ep_info.get("url", "")).path.lower()
+    by_type = {item["type"]: item for item in active_test_queue}
+
+    if "graphql" in path or "graphiql" in path:
+        selected = [by_type["GraphQL_Introspection"]]
+    elif "identity/api/auth/login" in path or path.endswith("/auth/login"):
+        selected = [by_type["SQL_Injection_Credential"]]
+    elif "sqli" in path:
+        selected = [by_type["SQL_Injection"], by_type["SQL_Injection_GET"]]
+        if "SQL_Injection_Time" in by_type:
+            selected.append(by_type["SQL_Injection_Time"])
+    elif "xss_r" in path or "xss_d" in path:
+        selected = [by_type["Cross_Site_Scripting"]]
+    elif "xss_s" in path:
+        # Do not create persistent stored-XSS content on a shared public lab.
+        selected = []
+    elif "exec" in path:
+        selected = [by_type["Command_Injection"]]
+    elif "/fi/" in path or "file" in path:
+        selected = [by_type["Local_File_Inclusion"]]
+    elif "brute" in path or "login" in path or "auth" in path:
+        selected = [by_type["Broken_Authentication"]]
+    else:
+        selected = [by_type["SQL_Injection_GET"], by_type["Cross_Site_Scripting"], by_type["Command_Injection"]]
+
+    if "Baseline_Inspection" not in {item["type"] for item in selected}:
+        selected.append(by_type["Baseline_Inspection"])
+    return selected
+
+
+def _resolve_test_method(ep_info: Dict[str, Any], test_item: Dict[str, Any], default_method: str) -> str:
+    if test_item.get("path_suffix"):
+        return "GET"
+    form_method = (ep_info.get("form_method") or "").upper()
+    if form_method in {"GET", "POST", "PUT", "PATCH", "DELETE"} and test_item.get("type") != "Baseline_Inspection":
+        return form_method
+    if not form_method and default_method.upper() in {"GET", "HEAD"} and test_item.get("type") == "Cross_Site_Scripting":
+        return default_method.upper()
+    return test_item.get("method", default_method).upper()
+
 
 def run_pipeline(target_url: str):
     print("\n" + "="*65)
@@ -27,8 +120,20 @@ def run_pipeline(target_url: str):
 
     # 1. Endpoint Discovery
     logger.info("Initializing Endpoint Discovery...")
-    discoverer = EndpointDiscovery(base_url=target_url)
+    discoverer = EndpointDiscovery(base_url=target_url, timeout=SCAN_TIMEOUT)
     discovered_endpoints = discoverer.discover()
+
+    if os.getenv("READ_ONLY_SAFE", "0").lower() in {"1", "true", "yes", "on"}:
+        before = len(discovered_endpoints)
+        discovered_endpoints = [ep for ep in discovered_endpoints if _is_safe_read_only_endpoint(ep)]
+        logger.info("Read-only safe mode retained %d of %d discovered endpoints", len(discovered_endpoints), before)
+
+    # Apply the configured safety/performance budget. MAX_ENDPOINTS was
+    # previously defined but never enforced, allowing a crawl to expand into
+    # hundreds of sequential active requests.
+    if len(discovered_endpoints) > MAX_ENDPOINTS:
+        logger.info("Limiting discovered endpoints from %d to %d", len(discovered_endpoints), MAX_ENDPOINTS)
+        discovered_endpoints = discovered_endpoints[:MAX_ENDPOINTS]
 
     if not discovered_endpoints:
         print("[!] No endpoints discovered. Performing target base URL analysis.")
@@ -49,10 +154,14 @@ def run_pipeline(target_url: str):
 
     try:
         active_test_queue = [
+            {"type": "GraphQL_Introspection", "payload": "{ __schema { queryType { fields { name } } } }", "method": "POST", "json_payload": {"query": "{ __schema { queryType { fields { name } } } }",}, "headers": {"Content-Type": "application/json"}},
+            {"type": "SQL_Injection_Credential", "payload": "x' OR '1'='1", "method": "POST", "json_payload": {"email": "nobody-test@example.com", "password": "x' OR '1'='1"}, "headers": {"Content-Type": "application/json"}},
             {"type": "SQL_Injection", "payload": "{\"username\": \"admin' OR 1=1 --\", \"password\": \"pass\"}", "method": "POST", "headers": {"Content-Type": "application/json"}},
             {"type": "SQL_Injection_GET", "payload": "' OR 1=1 --", "method": "GET"},
+            {"type": "SQL_Injection_Time", "payload": "1' AND SLEEP(5)--", "method": "GET"},
             {"type": "Cross_Site_Scripting", "payload": "<script>alert('xss')</script>", "method": "POST"},
             {"type": "Command_Injection", "payload": "; cat /etc/passwd", "method": "GET"},
+            {"type": "Local_File_Inclusion", "payload": "../../../../../../etc/passwd", "method": "GET"},
             {"type": "Broken_Authentication", "payload": "", "method": "GET", "headers": {"Authorization": "Bearer null"}},
             {"type": "BOLA_IDOR", "payload": "id=1", "method": "GET", "path_suffix": "/users/v1/1"},
             {"type": "BOLA_IDOR", "payload": "id=2", "method": "GET", "path_suffix": "/users/v1/2"},
@@ -75,26 +184,55 @@ def run_pipeline(target_url: str):
                 "response_time": baseline_req.get("response_time", 0.0)
             }
 
-            for test_item in active_test_queue:
+            baseline_is_frontend_shell = _is_frontend_shell_response(
+                base_ep_url,
+                baseline_req.get("response_headers", {}),
+                baseline_req.get("response_body", "")
+            )
+            if baseline_is_frontend_shell:
+                endpoint_queue = [item for item in active_test_queue if item.get("type") == "Baseline_Inspection"]
+                logger.info("Skipping active payloads for frontend shell endpoint: %s", base_ep_url)
+            else:
+                endpoint_queue = _select_test_queue(ep_info, active_test_queue)
+            prepared_requests = []
+            for test_item in endpoint_queue:
                 path_suffix = test_item.get("path_suffix", "")
                 if path_suffix:
-                    if base_ep_url.rstrip("/").endswith(path_suffix.strip("/")):
-                        test_url = base_ep_url
-                    else:
-                        test_url = base_ep_url.rstrip("/") + path_suffix
+                    parsed_base = urlsplit(base_ep_url)
+                    origin = urlunsplit((parsed_base.scheme, parsed_base.netloc, "", "", ""))
+                    test_url = origin.rstrip("/") + path_suffix
                 else:
                     test_url = base_ep_url
 
-                test_method = test_item.get("method", default_method)
+                test_method = _resolve_test_method(ep_info, test_item, default_method)
                 payload_str = test_item.get("payload", "")
                 custom_headers = test_item.get("headers", None)
+                query_params, form_data = _bind_payload_to_endpoint(ep_info, test_method, payload_str)
+                prepared_requests.append((test_item, test_url, test_method, payload_str, custom_headers, query_params, form_data))
 
-                # Send Request Telemetry
-                req_data = request_engine.send_request(test_method, test_url, payload=payload_str, custom_headers=custom_headers)
+            def dispatch(prepared):
+                test_item, test_url, test_method, payload_str, custom_headers, query_params, form_data = prepared
+                req_data = request_engine.send_request(
+                    test_method,
+                    test_url,
+                    payload=payload_str,
+                    custom_headers=custom_headers,
+                    json_payload=test_item.get("json_payload"),
+                    query_params=query_params,
+                    form_data=form_data
+                )
+                return test_item, test_url, test_method, payload_str, req_data
 
+            # Requests are bounded and concurrent, but all detection and SQLite writes
+            # remain sequential below so proof evaluation and persistence are deterministic.
+            with ThreadPoolExecutor(max_workers=min(ACTIVE_CONCURRENCY, max(1, len(prepared_requests)))) as executor:
+                dispatched_requests = list(executor.map(dispatch, prepared_requests))
+
+            for test_item, test_url, test_method, payload_str, req_data in dispatched_requests:
                 current_size = req_data.get("response_size", 0)
                 current_status = req_data.get("status_code", 200)
                 response_body = req_data.get("response_body", "")
+                req_data["frontend_shell_response"] = _is_frontend_shell_response(test_url, req_data.get("response_headers", {}), response_body, payload_str) and bool(payload_str)
 
                 error_indicators = [
                     "error", "sql", "syntax", "warning",
@@ -103,7 +241,7 @@ def run_pipeline(target_url: str):
                 ]
                 has_error = any(ind in response_body.lower() for ind in error_indicators)
 
-                if (current_size == baseline_telemetry.get("response_size", 0) 
+                if (current_size == baseline_telemetry.get("response_size", 0)
                     and current_status == baseline_telemetry.get("status_code", 200)
                     and current_size > 0
                     and not has_error
@@ -115,6 +253,7 @@ def run_pipeline(target_url: str):
                 if test_item["type"] == "Baseline_Inspection":
                     req_data["payload_had_effect"] = True
 
+                req_data["attack_category"] = test_item.get("type")
                 features = response_parser.extract_features(req_data)
 
                 # Layer 1 - Signature Detection & Proof Verification
@@ -147,11 +286,14 @@ def run_pipeline(target_url: str):
                 # Persist Result to SQLite Database
                 ep_obj = save_endpoint(session_id=session_obj.id, url=test_url, method=test_method)
 
-                attack_name = sig_res.get("attack_type", "None") if sig_res.get("is_vulnerable") or score > 0.0 else "None"
-                if sig_res.get("is_vulnerable") or score > 0.0:
+                confirmed = bool(risk_summary.get("is_vulnerable") or sig_res.get("is_vulnerable"))
+                attack_name = sig_res.get("attack_type", "None") if (confirmed or sig_res.get("matched") or sig_res.get("finding_status") == "Informational") else "None"
+                if confirmed:
                     vulnerability_count += 1
 
-                if score > 0 or sig_res.get("is_vulnerable") or sig_res.get("matched"):
+                # Persist non-zero triage signals for auditability, but only
+                # confirmed proof contributes to the vulnerability total.
+                if score > 0 or sig_res.get("matched"):
                     save_finding(
                         session_id=session_obj.id,
                         endpoint_id=ep_obj.id,

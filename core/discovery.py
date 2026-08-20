@@ -2,7 +2,7 @@ import re
 import json
 import yaml
 from typing import List, Dict, Any, Set
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, parse_qs
 import httpx
 from bs4 import BeautifulSoup
 
@@ -20,6 +20,8 @@ class EndpointDiscovery:
 
     COMMON_API_PATHS = [
         "/api",
+        "/graphql",
+        "/graphiql",
         "/api/v1",
         "/api/v2",
         "/v1",
@@ -82,6 +84,10 @@ class EndpointDiscovery:
         self.visited_urls: Set[str] = set()
         self.discovered_endpoints: List[Dict[str, str]] = []
 
+    @staticmethod
+    def query_fields(url: str) -> List[str]:
+        return list(parse_qs(urlparse(url).query, keep_blank_values=True).keys())
+
     def is_same_domain(self, url: str) -> bool:
         parsed = urlparse(url)
         return not parsed.netloc or parsed.netloc == self.domain
@@ -119,13 +125,24 @@ class EndpointDiscovery:
 
         # Deduplicate results
         unique_endpoints: List[Dict[str, str]] = []
-        seen = set()
+        by_identifier: Dict[str, Dict[str, Any]] = {}
         for ep in self.discovered_endpoints:
-            identifier = f"{ep['method']}:{ep['url']}"
-            if identifier not in seen:
-                seen.add(identifier)
-                unique_endpoints.append(ep)
+            identifier = ep["url"]
+            if identifier not in by_identifier:
+                by_identifier[identifier] = dict(ep)
+                continue
+            existing = by_identifier[identifier]
+            for key in ("form_fields", "query_fields"):
+                merged = list(dict.fromkeys((existing.get(key) or []) + (ep.get(key) or [])))
+                if merged:
+                    existing[key] = merged
+            if ep.get("form_defaults"):
+                existing["form_defaults"] = {**existing.get("form_defaults", {}), **ep["form_defaults"]}
+            if ep.get("form_method"):
+                existing["form_method"] = ep["form_method"]
+                existing["method"] = ep["form_method"]
 
+        unique_endpoints = list(by_identifier.values())
         self.discovered_endpoints = unique_endpoints
 
         print(f"\n[+] Discovery complete. Found {len(self.discovered_endpoints)} unique endpoints:")
@@ -178,10 +195,16 @@ class EndpointDiscovery:
         try:
             with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
                 response = client.get(current_url)
-                
-                # Record initial GET endpoint if successful
-                if response.status_code < 400:
-                    self.discovered_endpoints.append({"url": current_url, "method": "GET"})
+
+                # GraphQL commonly returns 400 JSON when no query is supplied; that still proves the endpoint exists.
+                content_type = response.headers.get("content-type", "")
+                is_graphql_error = "graphql" in current_url.lower() and response.status_code in {400, 405} and "json" in content_type.lower()
+                if response.status_code < 400 or is_graphql_error:
+                    self.discovered_endpoints.append({
+                        "url": current_url,
+                        "method": "GET",
+                        "query_fields": self.query_fields(current_url)
+                    })
 
                 # Parse HTML content if available
                 content_type = response.headers.get("content-type", "")
@@ -194,7 +217,11 @@ class EndpointDiscovery:
                         if href and not href.startswith(("#", "javascript:", "mailto:", "tel:")):
                             full_url = self.normalize_url(href, base=current_url)
                             if self.is_same_domain(full_url):
-                                self.discovered_endpoints.append({"url": full_url, "method": "GET"})
+                                self.discovered_endpoints.append({
+                                    "url": full_url,
+                                    "method": "GET",
+                                    "query_fields": self.query_fields(full_url)
+                                })
                                 if depth < self.max_depth:
                                     self._crawl_page(full_url, depth + 1)
 
@@ -204,7 +231,27 @@ class EndpointDiscovery:
                         method = form.get("method", "GET").upper()
                         form_url = self.normalize_url(action, base=current_url) if action else current_url
                         if self.is_same_domain(form_url):
-                            self.discovered_endpoints.append({"url": form_url, "method": method})
+                            form_elements = [
+                                field for field in form.find_all(["input", "textarea", "select"], attrs={"name": True})
+                                if field.get("name") and field.get("name").strip()
+                            ]
+                            field_names = [
+                                field.get("name").strip()
+                                for field in form_elements
+                                if field.name != "input" or field.get("type", "text").lower() not in {"hidden", "submit", "button", "reset", "file"}
+                            ]
+                            form_defaults = {
+                                field.get("name").strip(): field.get("value", "")
+                                for field in form_elements
+                            }
+                            self.discovered_endpoints.append({
+                                "url": form_url,
+                                "method": method,
+                                "form_method": method,
+                                "form_fields": field_names,
+                                "form_defaults": form_defaults,
+                                "query_fields": self.query_fields(form_url)
+                            })
 
         except httpx.RequestError as exc:
             logger.warning(f"Request error while crawling {current_url}: {exc}")

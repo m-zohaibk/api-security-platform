@@ -1,0 +1,418 @@
+{
+  "all_discovered": [
+    {
+      "url": "http://crapi.apisec.ai",
+      "method": "GET",
+      "query_fields": []
+    },
+    {
+      "url": "http://crapi.apisec.ai/api",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/graphql",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/graphiql",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/api/v1",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/api/v2",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/v1",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/v2",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/health",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/status",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/users",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/auth",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/login",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/search",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/products",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/cart",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/admin",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/signup",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/register",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/profile",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/account",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/dashboard",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/comments",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/articles",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/posts",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/categories",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/tags",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/users/v1",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/users/v1/login",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/users/v1/register",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/users/v1/_debug",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/users/v1/debug",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/users/v1/admin",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/users/v1/name1",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/users/v1/me",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/users/v1/1",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/users/v1/2",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/users/v1/3",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/books",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/books/v1",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/books/v1/1",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/books/v1/book1",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/createdb",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/rest/user/login",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/rest/products/search",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/api/Users",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/api/Feedbacks",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/api/v1/users",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/api/v1/admin",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/api/v1/login",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/api/v1/register",
+      "method": "GET"
+    }
+  ],
+  "safe_read_only": [
+    {
+      "url": "http://crapi.apisec.ai",
+      "method": "GET",
+      "query_fields": []
+    },
+    {
+      "url": "http://crapi.apisec.ai/api",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/graphql",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/graphiql",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/api/v1",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/api/v2",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/v1",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/v2",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/health",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/status",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/users",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/auth",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/search",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/products",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/cart",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/admin",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/profile",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/account",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/dashboard",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/comments",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/articles",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/posts",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/categories",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/tags",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/users/v1",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/users/v1/_debug",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/users/v1/debug",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/users/v1/admin",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/users/v1/name1",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/users/v1/me",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/users/v1/1",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/users/v1/2",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/users/v1/3",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/books",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/books/v1",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/books/v1/1",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/books/v1/book1",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/rest/products/search",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/api/Users",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/api/Feedbacks",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/api/v1/users",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/api/v1/admin",
+      "method": "GET"
+    }
+  ],
+  "excluded": [
+    {
+      "url": "http://crapi.apisec.ai/login",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/signup",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/register",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/users/v1/login",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/users/v1/register",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/createdb",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/rest/user/login",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/api/v1/login",
+      "method": "GET"
+    },
+    {
+      "url": "http://crapi.apisec.ai/api/v1/register",
+      "method": "GET"
+    }
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "health": {
+    "status": 200,
+    "elapsed": 1.1236,
+    "size": 2835,
+    "content_type": "text/html",
+    "body_preview": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"/><link rel=\"icon\" href=\"/favicon.ico\"/><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"/><meta name=\"theme-color\" content=\"#000000\"/><meta http-equiv=\"cache-control\" content=\"no-cache\"><meta http-equiv=\"Pragma\" content=\"no-cache\"/><meta http-equiv=\"Expires\" content=\"0\"/><meta name=\"keywords\" content=\"OWASP, API, Top 10, B",
+    "headers": {
+      "server": "openresty/1.17.8.2",
+      "date": "Thu, 20 Aug 2026 16:16:43 GMT",
+      "content-type": "text/html",
+      "content-length": "2835",
+      "connection": "keep-alive",
+      "last-modified": "Thursday, 20-Aug-2026 16:16:43 UTC",
+      "cache-control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+      "accept-ranges": "bytes"
+    },
+    "error": null
+  },
+  "public_api": {
+    "status": 200,
+    "elapsed": 0.3129,
+    "size": 2835,
+    "content_type": "text/html",
+    "body_preview": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"/><link rel=\"icon\" href=\"/favicon.ico\"/><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"/><meta name=\"theme-color\" content=\"#000000\"/><meta http-equiv=\"cache-control\" content=\"no-cache\"><meta http-equiv=\"Pragma\" content=\"no-cache\"/><meta http-equiv=\"Expires\" content=\"0\"/><meta name=\"keywords\" content=\"OWASP, API, Top 10, B",
+    "headers": {
+      "server": "openresty/1.17.8.2",
+      "date": "Thu, 20 Aug 2026 16:16:43 GMT",
+      "content-type": "text/html",
+      "content-length": "2835",
+      "connection": "keep-alive",
+      "last-modified": "Thursday, 20-Aug-2026 16:16:43 UTC",
+      "cache-control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+      "accept-ranges": "bytes"
+    },
+    "error": null
+  },
+  "public_api_probe": {
+    "status": 200,
+    "elapsed": 0.4608,
+    "size": 2835,
+    "content_type": "text/html",
+    "body_preview": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"/><link rel=\"icon\" href=\"/favicon.ico\"/><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"/><meta name=\"theme-color\" content=\"#000000\"/><meta http-equiv=\"cache-control\" content=\"no-cache\"><meta http-equiv=\"Pragma\" content=\"no-cache\"/><meta http-equiv=\"Expires\" content=\"0\"/><meta name=\"keywords\" content=\"OWASP, API, Top 10, B",
+    "headers": {
+      "server": "openresty/1.17.8.2",
+      "date": "Thu, 20 Aug 2026 16:16:43 GMT",
+      "content-type": "text/html",
+      "content-length": "2835",
+      "connection": "keep-alive",
+      "last-modified": "Thursday, 20-Aug-2026 16:16:43 UTC",
+      "cache-control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+      "accept-ranges": "bytes"
+    },
+    "error": null
+  },
+  "public_api_probe_delta": {
+    "status_changed": false,
+    "size_delta": 0
+  },
+  "graphql": {
+    "status": 405,
+    "elapsed": 0.3051,
+    "size": 163,
+    "content_type": "text/html",
+    "body_preview": "<html>\r\n<head><title>405 Not Allowed</title></head>\r\n<body>\r\n<center><h1>405 Not Allowed</h1></center>\r\n<hr><center>openresty/1.17.8.2</center>\r\n</body>\r\n</html>\r\n",
+    "headers": {
+      "server": "openresty/1.17.8.2",
+      "date": "Thu, 20 Aug 2026 16:16:44 GMT",
+      "content-type": "text/html",
+      "content-length": "163",
+      "connection": "keep-alive"
+    },
+    "error": null
+  },
+  "identity_baseline": {
+    "status": 500,
+    "elapsed": 0.6018,
+    "size": 74,
+    "content_type": "text/plain;charset=UTF-8",
+    "body_preview": "UserDetailsService returned null, which is an interface contract violation",
+    "headers": {
+      "server": "openresty/1.17.8.2",
+      "date": "Thu, 20 Aug 2026 16:16:44 GMT",
+      "content-type": "text/plain;charset=UTF-8",
+      "content-length": "74",
+      "connection": "keep-alive",
+      "vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+      "x-content-type-options": "nosniff",
+      "x-xss-protection": "1; mode=block",
+      "cache-control": "no-cache, no-store, max-age=0, must-revalidate",
+      "pragma": "no-cache",
+      "expires": "0",
+      "x-frame-options": "DENY"
+    },
+    "error": null
+  },
+  "identity_probe": {
+    "status": 500,
+    "elapsed": 0.4753,
+    "size": 74,
+    "content_type": "text/plain;charset=UTF-8",
+    "body_preview": "UserDetailsService returned null, which is an interface contract violation",
+    "headers": {
+      "server": "openresty/1.17.8.2",
+      "date": "Thu, 20 Aug 2026 16:16:45 GMT",
+      "content-type": "text/plain;charset=UTF-8",
+      "content-length": "74",
+      "connection": "keep-alive",
+      "vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+      "x-content-type-options": "nosniff",
+      "x-xss-protection": "1; mode=block",
+      "cache-control": "no-cache, no-store, max-age=0, must-revalidate",
+      "pragma": "no-cache",
+      "expires": "0",
+      "x-frame-options": "DENY"
+    },
+    "error": null
+  },
+  "identity_probe_delta": {
+    "status_changed": false,
+    "size_delta": 0,
+    "time_delta": -0.1265
+  }
+}

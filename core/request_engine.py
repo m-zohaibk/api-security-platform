@@ -26,7 +26,9 @@ class RequestEngine:
         url: str,
         payload: Optional[str] = None,
         custom_headers: Optional[Dict[str, str]] = None,
-        json_payload: Optional[Dict[str, Any]] = None
+        json_payload: Optional[Dict[str, Any]] = None,
+        query_params: Optional[Dict[str, Any]] = None,
+        form_data: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
         Dispatches HTTP request to the target URL with provided payload and records performance metrics.
@@ -43,10 +45,14 @@ class RequestEngine:
         json_data = None
 
         if method_upper in ["GET", "DELETE"]:
-            if payload_str:
+            if query_params is not None:
+                params = query_params
+            elif payload_str:
                 params = {"q": payload_str}
         elif method_upper in ["POST", "PUT", "PATCH"]:
-            if json_payload:
+            if form_data is not None:
+                data = form_data
+            elif json_payload is not None:
                 json_data = json_payload
             elif payload_str:
                 import json
@@ -59,7 +65,7 @@ class RequestEngine:
                         data = payload_str
 
         start_time = time.time()
-        
+
         try:
             with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
                 response = client.request(
@@ -128,7 +134,9 @@ class RequestEngine:
         url: str,
         payload: Optional[str] = None,
         custom_headers: Optional[Dict[str, str]] = None,
-        json_payload: Optional[Dict[str, Any]] = None
+        json_payload: Optional[Dict[str, Any]] = None,
+        query_params: Optional[Dict[str, Any]] = None,
+        form_data: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
         Asynchronously dispatches HTTP request using httpx.AsyncClient for high-throughput API testing.
@@ -144,10 +152,14 @@ class RequestEngine:
         json_data = None
 
         if method_upper in ["GET", "DELETE"]:
-            if payload_str:
+            if query_params is not None:
+                params = query_params
+            elif payload_str:
                 params = {"q": payload_str}
         elif method_upper in ["POST", "PUT", "PATCH"]:
-            if json_payload:
+            if form_data is not None:
+                data = form_data
+            elif json_payload is not None:
                 json_data = json_payload
             elif payload_str:
                 import json

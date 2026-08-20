@@ -1,0 +1,9 @@
+{
+  "base": "http://crapi.apisec.ai",
+  "openapi": null,
+  "login_page": {
+    "status": 200,
+    "content_type": "text/html",
+    "size": 2835
+  }
+}

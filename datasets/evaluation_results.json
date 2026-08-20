@@ -1,64 +1,65 @@
 {
-  "timestamp": "2026-08-17 22:45:29",
+  "timestamp": "2026-08-20 19:30:50",
+  "evaluation_status": "dataset_missing",
   "layer_1_signature": {
-    "precision": 100.0,
-    "recall": 7.8,
-    "f1_score": 14.47,
-    "false_positive_rate": 0.0
+    "precision": null,
+    "recall": null,
+    "f1_score": null,
+    "false_positive_rate": null
   },
   "layer_2_ml_isolation_forest": {
-    "precision": 64.67,
-    "recall": 31.45,
-    "f1_score": 42.32,
-    "false_positive_rate": 14.35
+    "precision": null,
+    "recall": null,
+    "f1_score": null,
+    "false_positive_rate": null
   },
   "layer_3_deep_learning": {
-    "precision": 86.99,
-    "recall": 42.49,
-    "f1_score": 57.09,
-    "false_positive_rate": 5.31
+    "precision": null,
+    "recall": null,
+    "f1_score": null,
+    "false_positive_rate": null
   },
   "combined_pipeline": {
-    "precision": 91.26,
-    "recall": 25.01,
-    "f1_score": 39.26,
-    "false_positive_rate": 2.0
+    "precision": null,
+    "recall": null,
+    "f1_score": null,
+    "false_positive_rate": null
   },
   "per_category_detection": {
     "SQL_Injection": {
-      "detected": 5,
+      "detected": 1,
       "total": 5,
-      "detection_rate_pct": 100.0
+      "detection_rate_pct": 20.0
     },
     "XSS": {
-      "detected": 5,
+      "detected": 0,
       "total": 5,
-      "detection_rate_pct": 100.0
+      "detection_rate_pct": 0.0
     },
     "Command_Injection": {
-      "detected": 5,
+      "detected": 1,
       "total": 5,
-      "detection_rate_pct": 100.0
+      "detection_rate_pct": 20.0
     },
     "BOLA_IDOR": {
-      "detected": 5,
+      "detected": 2,
       "total": 5,
-      "detection_rate_pct": 100.0
+      "detection_rate_pct": 40.0
     },
     "Broken_Authentication": {
-      "detected": 5,
+      "detected": 0,
       "total": 5,
-      "detection_rate_pct": 100.0
+      "detection_rate_pct": 0.0
     },
     "Path_Traversal": {
-      "detected": 5,
+      "detected": 0,
       "total": 5,
-      "detection_rate_pct": 100.0
+      "detection_rate_pct": 0.0
     },
     "Security_Misconfiguration": {
-      "detected": 5,
+      "detected": 2,
       "total": 5,
-      "detection_rate_pct": 100.0
+      "detection_rate_pct": 40.0
     }
   },
   "per_method_fpr": {
@@ -67,76 +68,78 @@
     "AUTHENTICATED": 0.0
   },
   "scan_performance": {
-    "avg_sec": 0.0069,
-    "min_sec": 0.004,
-    "max_sec": 0.4287,
-    "p95_sec": 0.009
+    "status": "unavailable",
+    "avg_sec": null,
+    "min_sec": null,
+    "max_sec": null,
+    "p95_sec": null
   },
   "vampi_live_results": {
-    "endpoints_tested": 7,
-    "true_positives": 5,
+    "status": "unavailable",
+    "endpoints_tested": 0,
+    "true_positives": 0,
     "false_positives": 0,
-    "clean_endpoints": 1
+    "clean_endpoints": 0
   },
   "owasp_api_top_10_coverage": {
     "API1: BOLA / IDOR": {
-      "detected": true,
-      "correct_count": 1,
-      "missed_count": 0,
+      "detected": false,
+      "correct_count": 0,
+      "missed_count": 1,
       "fp_count": 0
     },
     "API2: Broken Authentication": {
-      "detected": true,
-      "correct_count": 1,
-      "missed_count": 0,
+      "detected": false,
+      "correct_count": 0,
+      "missed_count": 1,
       "fp_count": 0
     },
     "API3: Broken Object Property Authorization": {
-      "detected": true,
-      "correct_count": 1,
-      "missed_count": 0,
+      "detected": false,
+      "correct_count": 0,
+      "missed_count": 1,
       "fp_count": 0
     },
     "API4: Unrestricted Resource Consumption": {
-      "detected": true,
-      "correct_count": 1,
-      "missed_count": 0,
+      "detected": false,
+      "correct_count": 0,
+      "missed_count": 1,
       "fp_count": 0
     },
     "API5: Broken Function Level Authorization": {
-      "detected": true,
-      "correct_count": 1,
-      "missed_count": 0,
+      "detected": false,
+      "correct_count": 0,
+      "missed_count": 1,
       "fp_count": 0
     },
     "API6: Unrestricted Access to Business Flows": {
-      "detected": true,
-      "correct_count": 1,
-      "missed_count": 0,
+      "detected": false,
+      "correct_count": 0,
+      "missed_count": 1,
       "fp_count": 0
     },
     "API7: Server Side Request Forgery": {
-      "detected": true,
-      "correct_count": 1,
-      "missed_count": 0,
+      "detected": false,
+      "correct_count": 0,
+      "missed_count": 1,
       "fp_count": 0
     },
     "API8: Security Misconfiguration": {
-      "detected": true,
-      "correct_count": 1,
-      "missed_count": 0,
+      "detected": false,
+      "correct_count": 0,
+      "missed_count": 1,
       "fp_count": 0
     },
     "API9: Improper Inventory Management": {
-      "detected": true,
-      "correct_count": 1,
-      "missed_count": 0,
+      "detected": false,
+      "correct_count": 0,
+      "missed_count": 1,
       "fp_count": 0
     },
     "API10: Unsafe Consumption of APIs": {
-      "detected": true,
-      "correct_count": 1,
-      "missed_count": 0,
+      "detected": false,
+      "correct_count": 0,
+      "missed_count": 1,
       "fp_count": 0
     }
   }
