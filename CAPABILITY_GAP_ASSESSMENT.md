@@ -3,7 +3,7 @@
 **Repository:** [`m-zohaibk/api-security-platform`](https://github.com/m-zohaibk/api-security-platform)
 **Assessment date:** 2026-08-21
 **Assessment scope:** Current working version after the repository cleanup and the open-redirect capability improvement
-**Automated validation:** **68 tests passed**
+**Automated validation:** **71 tests passed**
 
 ## Executive Assessment
 
@@ -11,7 +11,7 @@ The previous gap assessment was substantially accurate about the scanner’s pro
 
 The platform is a **proof-oriented API and web-application scanner**, not yet a complete authenticated API security platform. It is strongest when a vulnerability can be established from a deterministic HTTP response marker. Confirmed findings require proof such as a database error, explicit delay response, unescaped reflection, command output, local-file content, or an external redirect response. Payload syntax, anomaly scores, and missing headers remain separate from confirmed vulnerability counts.
 
-The current implementation has been verified on authorized training targets. It confirmed command injection and reflected XSS on DVWA, confirmed LFI on DVWA, confirmed an external open redirect on the DVWA training endpoint, detected GraphQL introspection as informational on DVGA, matched the testasp manual score, and completed a safe-mode crAPI assessment without confirmed active-probe findings. The repository’s complete test suite now passes **68 tests**.
+The current implementation has been verified on authorized training targets. It confirmed command injection and reflected XSS on DVWA, confirmed LFI on DVWA, confirmed an external open redirect on the DVWA training endpoint, detected GraphQL introspection as informational on DVGA, matched the testasp manual score, and completed a safe-mode crAPI assessment without confirmed active-probe findings. The repository’s complete test suite now passes **71 tests**.
 
 ## What Changed Since the Previous Assessment
 
@@ -21,7 +21,7 @@ The current implementation has been verified on authorized training targets. It 
 | Open redirect was missing. | Updated. External redirects are tested with `follow_redirects=False` and confirmed only from an external 3xx `Location` header. |
 | Redirect evidence was not preserved. | Updated. The request engine now accepts an explicit `follow_redirects` option for synchronous and asynchronous requests. |
 | Redirect routes were not reliably selected. | Updated. Paths containing `open_redirect`, `redirect`, or a discovered `redirect` query field route to the dedicated probe. |
-| The report described only the earlier 64-test state. | Updated. The latest suite contains **68 passing tests**, including redirect transport, proof, and routing regressions. |
+| The report described only the earlier 64-test state. | Updated. The latest suite contains **71 passing tests**, including redirect transport, proof, routing, schema-binding, and BOLA-selection regressions. |
 
 The repository cleanup removed older session-history reports and raw exploratory artifacts. The retained documents are the final accuracy report, this capability assessment, and the performance report. The current regression source remains [`tests/test_accuracy_regressions.py`](tests/test_accuracy_regressions.py), and the focused scan harness remains [`tests/targeted_main_scan.py`](tests/targeted_main_scan.py).
 
@@ -29,7 +29,7 @@ The repository cleanup removed older session-history reports and raw exploratory
 
 | Capability | Current implementation | Current verification | Remaining boundary |
 |---|---|---|---|
-| Endpoint discovery | Crawls HTML, parses OpenAPI/Swagger when available, probes common paths, records forms and query fields, merges duplicate metadata, and applies `MAX_ENDPOINTS`. | Exercised across DVWA, DVGA, testasp, and crAPI. | Dynamic JavaScript routes, authenticated routes, and API routes revealed only after workflow actions may be missed. |
+| Endpoint discovery | Crawls HTML, parses OpenAPI/Swagger when available, extracts documented query and JSON fields, probes common paths, records forms, merges duplicate metadata, and applies `MAX_ENDPOINTS`. | Exercised across DVWA, DVGA, testasp, and crAPI; schema-binding is regression-tested. | Dynamic JavaScript routes, authenticated routes, and API routes revealed only after workflow actions may be missed. |
 | HTTP transport | Supports GET, POST, PUT, PATCH, DELETE, named query/form/JSON fields, empty JSON objects, custom headers, async requests, and explicit redirect-following control. | Regression-tested and used on real training targets. | No persistent connection pool across all sync requests; discovery remains mostly sequential. |
 | Bounded performance | Active probes are dispatched with bounded concurrency through `ACTIVE_CONCURRENCY`; analysis and SQLite writes remain sequential. | Broader DVWA run completed in 216 seconds with four workers after a prior sequential timeout. | Discovery is still a significant sequential cost; no adaptive host rate control or progress ETA. |
 | SQL injection | Tests error-based and selected time-based SQLi, with explicit delay payload requirements and credential/login JSON routing. | Timing false positive removed on DVWA; credential endpoint compared on crAPI. | Blind SQLi differential analysis, broad DBMS payload families, and authenticated parameter coverage are missing. |
@@ -37,7 +37,7 @@ The repository cleanup removed older session-history reports and raw exploratory
 | Command injection | Routes command probes to relevant module fields and confirms strong command-output markers or delay evidence. | Confirmed manually and automatically on DVWA using `root:x:0:0:`. | Payload corpus is small; blind command injection and broader OS/shell coverage are missing. |
 | Local file inclusion | Sends traversal probes and checks known local-file markers. | Confirmed on DVWA using `/etc/passwd` evidence. | Windows paths, encoding bypasses, wrappers, remote inclusion, and protocol-specific behavior are not covered. |
 | Open redirect | Sends an external destination to redirect-like query routes without following the redirect and confirms an external 3xx `Location` header. | Confirmed on DVWA: HTTP 302 to `https://example.com/api-security-redirect-check`. | No redirect-chain policy analysis, JavaScript redirects, meta refresh, encoded bypass matrix, or allowlist-aware validation. |
-| BOLA/IDOR | Tests selected numeric object suffixes and requires sensitive data plus an unauthenticated context before confirmation. | Regression-tested; no unsupported confirmed claim was made on crAPI. | No two-principal ownership model, role comparison, or field-level property authorization. |
+| BOLA/IDOR | Routes discovered user/account/profile object paths to bounded distinct ID probes and requires sensitive data plus an unauthenticated context before confirmation. | Selection and proof are regression-tested; no unsupported confirmed claim was made on crAPI. | No two-principal ownership model, role comparison, or field-level property authorization. |
 | Authentication weakness | Tests limited null/undefined bearer patterns, weak-auth signatures, and credential SQLi routing. | Credential endpoint manually compared on crAPI. | No complete login/session lifecycle, MFA, password reset, token replay, lockout, or session fixation workflow. |
 | GraphQL introspection | Discovers `/graphql` and `/graphiql`, sends structured introspection JSON, and classifies schema exposure as informational. | Manually verified on DVGA with 12 query fields. | No field authorization, mutation safety, depth/alias abuse, resolver injection, batching, or GraphQL rate-limit testing. |
 | Security misconfiguration | Checks configured security headers and separates observations from confirmed vulnerability totals. | Observed on training targets, including crAPI. | Header policy is generic and does not yet account for route role, TLS policy, browser context, or API-specific risk. |
@@ -84,7 +84,7 @@ The improvement was tested against the authorized DVWA training endpoint. A manu
 Location: https://example.com/api-security-redirect-check
 ```
 
-The improved scanner reproduced the same behavior and persisted one confirmed `Open_Redirect` finding with the same external destination. Focused regression coverage increased the suite from 64 to **68 passing tests**, including transport preservation, external-location proof, relative-redirect non-confirmation, and redirect-route selection.
+The improved scanner reproduced the same behavior and persisted one confirmed `Open_Redirect` finding with the same external destination. The same release also adds OpenAPI request-body field extraction and bounded BOLA probes for discovered user/account/profile object routes. Focused and full regression coverage increased the suite from 64 to **71 passing tests**, including transport preservation, external-location proof, relative-redirect non-confirmation, redirect-route selection, schema-aware JSON binding, and BOLA route selection.
 
 ## Priority Roadmap
 

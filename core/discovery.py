@@ -132,7 +132,7 @@ class EndpointDiscovery:
                 by_identifier[identifier] = dict(ep)
                 continue
             existing = by_identifier[identifier]
-            for key in ("form_fields", "query_fields"):
+            for key in ("form_fields", "query_fields", "json_fields"):
                 merged = list(dict.fromkeys((existing.get(key) or []) + (ep.get(key) or [])))
                 if merged:
                     existing[key] = merged
@@ -177,12 +177,32 @@ class EndpointDiscovery:
                                 # Replace parameterized path variables like {username} with test values
                                 clean_path = re.sub(r"\{[^}]+\}", "admin", api_path)
                                 full_url = f"{self.base_url}{clean_path}"
-                                for http_method in methods.keys():
-                                    if http_method.upper() in ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"]:
-                                        self.discovered_endpoints.append({
-                                            "url": full_url,
-                                            "method": http_method.upper()
-                                        })
+                                for http_method, operation in methods.items():
+                                    if http_method.upper() not in ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"]:
+                                        continue
+                                    endpoint = {
+                                        "url": full_url,
+                                        "method": http_method.upper()
+                                    }
+                                    if isinstance(operation, dict):
+                                        parameters = operation.get("parameters") or []
+                                        query_fields = [
+                                            parameter.get("name")
+                                            for parameter in parameters
+                                            if isinstance(parameter, dict) and parameter.get("in") == "query" and parameter.get("name")
+                                        ]
+                                        if query_fields:
+                                            endpoint["query_fields"] = query_fields
+                                        request_body = operation.get("requestBody") or {}
+                                        content = request_body.get("content") if isinstance(request_body, dict) else {}
+                                        if isinstance(content, dict):
+                                            for media_type in ("application/json", "application/*+json"):
+                                                media_schema = content.get(media_type, {}).get("schema", {}) if isinstance(content.get(media_type), dict) else {}
+                                                properties = media_schema.get("properties", {}) if isinstance(media_schema, dict) else {}
+                                                if isinstance(properties, dict) and properties:
+                                                    endpoint["json_fields"] = list(properties.keys())
+                                                    break
+                                    self.discovered_endpoints.append(endpoint)
                 except Exception as exc:
                     logger.debug(f"OpenAPI probe exception at {target_url}: {exc}")
 

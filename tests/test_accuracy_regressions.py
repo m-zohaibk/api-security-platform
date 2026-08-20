@@ -669,3 +669,36 @@ def test_redirect_query_route_selects_open_redirect_probe():
         queue,
     )
     assert [item["type"] for item in selected] == ["Open_Redirect", "Baseline_Inspection"]
+
+
+def test_documented_json_fields_bind_active_payload_to_first_field():
+    from main import _bind_json_payload_to_endpoint
+
+    payload = _bind_json_payload_to_endpoint(
+        {"json_fields": ["search", "page"]},
+        "POST",
+        "<script>alert('xss')</script>",
+    )
+    assert payload == {"search": "<script>alert('xss')</script>", "page": ""}
+
+
+def test_json_binding_is_not_used_for_get_requests():
+    from main import _bind_json_payload_to_endpoint
+
+    assert _bind_json_payload_to_endpoint({"json_fields": ["search"]}, "GET", "probe") is None
+
+
+def test_user_object_route_selects_bola_probes():
+    from main import _select_test_queue
+
+    queue = [
+        {"type": "BOLA_IDOR", "payload": "id=1", "method": "GET", "path_suffix": "/users/v1/1"},
+        {"type": "BOLA_IDOR", "payload": "id=2", "method": "GET", "path_suffix": "/users/v1/2"},
+        {"type": "Baseline_Inspection", "payload": "", "method": "GET"},
+    ]
+    selected = _select_test_queue(
+        {"url": "https://example.test/users/v1/1", "method": "GET"},
+        queue,
+    )
+    assert [item["path_suffix"] for item in selected[:2]] == ["/users/v1/1", "/users/v1/2"]
+    assert selected[-1]["type"] == "Baseline_Inspection"

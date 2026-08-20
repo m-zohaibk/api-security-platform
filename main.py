@@ -66,6 +66,15 @@ def _bind_payload_to_endpoint(ep_info: Dict[str, Any], method: str, payload: str
     return None, None
 
 
+def _bind_json_payload_to_endpoint(ep_info: Dict[str, Any], method: str, payload: str):
+    fields = [field for field in (ep_info.get("json_fields") or []) if field]
+    if fields and method.upper() in {"POST", "PUT", "PATCH"}:
+        values = {field: "" for field in fields}
+        values[fields[0]] = payload
+        return values
+    return None
+
+
 def _select_test_queue(ep_info: Dict[str, Any], active_test_queue: List[Dict[str, Any]]):
     """Select a bounded, non-destructive probe set for an endpoint/module."""
     path = urlsplit(ep_info.get("url", "")).path.lower()
@@ -87,6 +96,9 @@ def _select_test_queue(ep_info: Dict[str, Any], active_test_queue: List[Dict[str
         selected = []
     elif "open_redirect" in path or "redirect" in path or "redirect" in query_fields:
         selected = [by_type["Open_Redirect"]]
+    elif any(token in path for token in ("/users/", "/accounts/", "/profiles/")):
+        bola_items = [item for item in active_test_queue if item.get("type") == "BOLA_IDOR"]
+        selected = bola_items[:2] if bola_items else [by_type["Baseline_Inspection"]]
     elif "exec" in path:
         selected = [by_type["Command_Injection"]]
     elif "/fi/" in path or "file" in path:
@@ -212,16 +224,19 @@ def run_pipeline(target_url: str):
                 payload_str = test_item.get("payload", "")
                 custom_headers = test_item.get("headers", None)
                 query_params, form_data = _bind_payload_to_endpoint(ep_info, test_method, payload_str)
-                prepared_requests.append((test_item, test_url, test_method, payload_str, custom_headers, query_params, form_data))
+                json_payload = test_item.get("json_payload") if test_item.get("json_payload") is not None else _bind_json_payload_to_endpoint(ep_info, test_method, payload_str)
+                if json_payload is not None and custom_headers is None:
+                    custom_headers = {"Content-Type": "application/json"}
+                prepared_requests.append((test_item, test_url, test_method, payload_str, custom_headers, query_params, form_data, json_payload))
 
             def dispatch(prepared):
-                test_item, test_url, test_method, payload_str, custom_headers, query_params, form_data = prepared
+                test_item, test_url, test_method, payload_str, custom_headers, query_params, form_data, json_payload = prepared
                 req_data = request_engine.send_request(
                     test_method,
                     test_url,
                     payload=payload_str,
                     custom_headers=custom_headers,
-                    json_payload=test_item.get("json_payload"),
+                    json_payload=json_payload,
                     query_params=query_params,
                     form_data=form_data,
                     follow_redirects=test_item.get("follow_redirects", True)
