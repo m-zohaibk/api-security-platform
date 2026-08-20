@@ -702,3 +702,96 @@ def test_user_object_route_selects_bola_probes():
     )
     assert [item["path_suffix"] for item in selected[:2]] == ["/users/v1/1", "/users/v1/2"]
     assert selected[-1]["type"] == "Baseline_Inspection"
+
+
+def test_xxe_requires_xml_content_type_and_local_canary_proof():
+    detector = SignatureDetector()
+    payload = '<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><foo>&xxe;</foo>'
+    confirmed = detector.analyze(
+        {
+            "url": "https://example.test/xml",
+            "payload": payload,
+            "attack_category": "XXE",
+            "status_code": 200,
+            "response_body": "root:x:0:0:root:/root:/bin/bash",
+            "response_size": 35,
+            "response_time": 0.2,
+            "response_headers": {"content-type": "application/xml"},
+            "request_headers": {"Content-Type": "application/xml"},
+        }
+    )
+    assert confirmed["attack_type"] == "XXE"
+    assert confirmed["is_vulnerable"] is True
+    assert confirmed["has_proof"] is True
+
+    missing_xml_context = detector.analyze(
+        {
+            "url": "https://example.test/xml",
+            "payload": payload,
+            "attack_category": "XXE",
+            "status_code": 200,
+            "response_body": "root:x:0:0:root:/root:/bin/bash",
+            "response_size": 35,
+            "response_time": 0.2,
+            "response_headers": {"content-type": "text/plain"},
+            "request_headers": {"Content-Type": "application/xml"},
+        }
+    )
+    assert missing_xml_context["is_vulnerable"] is False
+    assert missing_xml_context["finding_status"] == "Suspected"
+
+
+def test_xml_route_selects_only_xxe_probe():
+    from main import _select_test_queue
+
+    queue = [
+        {"type": "XXE", "payload": "xml", "method": "POST"},
+        {"type": "SQL_Injection", "payload": "sql", "method": "POST"},
+        {"type": "Baseline_Inspection", "payload": "", "method": "GET"},
+    ]
+    selected = _select_test_queue({"url": "https://example.test/api/xml/import", "method": "POST"}, queue)
+    assert [item["type"] for item in selected] == ["XXE", "Baseline_Inspection"]
+
+
+def test_openapi_xml_content_type_selects_xxe_probe():
+    from main import _select_test_queue
+
+    queue = [
+        {"type": "XXE", "payload": "xml", "method": "POST"},
+        {"type": "SQL_Injection", "payload": "sql", "method": "POST"},
+        {"type": "Baseline_Inspection", "payload": "", "method": "GET"},
+    ]
+    selected = _select_test_queue(
+        {
+            "url": "https://example.test/search",
+            "method": "POST",
+            "request_content_types": ["application/xml"],
+        },
+        queue,
+    )
+    assert [item["type"] for item in selected] == ["XXE", "Baseline_Inspection"]
+
+
+def test_csrf_candidate_is_passive_and_requires_missing_token():
+    from main import _is_csrf_candidate
+
+    assert _is_csrf_candidate({
+        "url": "https://example.test/vulnerabilities/csrf/",
+        "method": "POST",
+        "form_method": "POST",
+        "form_fields": ["password_new", "password_conf"],
+        "csrf_token_fields": [],
+    }) is True
+    assert _is_csrf_candidate({
+        "url": "https://example.test/vulnerabilities/csrf/",
+        "method": "POST",
+        "form_method": "POST",
+        "csrf_token_fields": ["user_token"],
+    }) is False
+    assert _is_csrf_candidate({
+        "url": "https://example.test/vulnerabilities/csrf/",
+        "method": "GET",
+        "form_method": "GET",
+        "form_fields": ["password_new", "password_conf"],
+        "csrf_token_fields": [],
+    }) is True

@@ -75,14 +75,26 @@ def _bind_json_payload_to_endpoint(ep_info: Dict[str, Any], method: str, payload
     return None
 
 
+def _is_csrf_candidate(ep_info: Dict[str, Any]) -> bool:
+    path = urlsplit(ep_info.get("url", "")).path.lower()
+    form_method = (ep_info.get("form_method") or ep_info.get("method") or "GET").upper()
+    has_form_fields = bool(ep_info.get("form_fields") or [])
+    return "csrf" in path and form_method in {"GET", "POST", "PUT", "PATCH", "DELETE"} and has_form_fields and not (ep_info.get("csrf_token_fields") or [])
+
+
 def _select_test_queue(ep_info: Dict[str, Any], active_test_queue: List[Dict[str, Any]]):
     """Select a bounded, non-destructive probe set for an endpoint/module."""
     path = urlsplit(ep_info.get("url", "")).path.lower()
     query_fields = {str(field).lower() for field in (ep_info.get("query_fields") or [])}
+    content_types = {str(value).lower() for value in (ep_info.get("request_content_types") or [])}
     by_type = {item["type"]: item for item in active_test_queue}
 
     if "graphql" in path or "graphiql" in path:
         selected = [by_type["GraphQL_Introspection"]]
+    elif "application/xml" in content_types or "text/xml" in content_types or "xml" in path or "xxe" in path:
+        selected = [by_type["XXE"]]
+    elif _is_csrf_candidate(ep_info):
+        selected = [by_type["Baseline_Inspection"]]
     elif "identity/api/auth/login" in path or path.endswith("/auth/login"):
         selected = [by_type["SQL_Injection_Credential"]]
     elif "sqli" in path:
@@ -170,6 +182,7 @@ def run_pipeline(target_url: str, sarif_output: str = None):
     try:
         active_test_queue = [
             {"type": "GraphQL_Introspection", "payload": "{ __schema { queryType { fields { name } } } }", "method": "POST", "json_payload": {"query": "{ __schema { queryType { fields { name } } } }",}, "headers": {"Content-Type": "application/json"}},
+            {"type": "XXE", "payload": '<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><foo>&xxe;</foo>', "method": "POST", "headers": {"Content-Type": "application/xml"}},
             {"type": "SQL_Injection_Credential", "payload": "x' OR '1'='1", "method": "POST", "json_payload": {"email": "nobody-test@example.com", "password": "x' OR '1'='1"}, "headers": {"Content-Type": "application/json"}},
             {"type": "SQL_Injection", "payload": "{\"username\": \"admin' OR 1=1 --\", \"password\": \"pass\"}", "method": "POST", "headers": {"Content-Type": "application/json"}},
             {"type": "SQL_Injection_GET", "payload": "' OR 1=1 --", "method": "GET"},
@@ -205,6 +218,24 @@ def run_pipeline(target_url: str, sarif_output: str = None):
                 baseline_req.get("response_headers", {}),
                 baseline_req.get("response_body", "")
             )
+
+            if _is_csrf_candidate(ep_info):
+                csrf_ep = save_endpoint(session_id=session_obj.id, url=base_ep_url, method=default_method)
+                save_finding(
+                    session_id=session_obj.id,
+                    endpoint_id=csrf_ep.id,
+                    attack_type="CSRF",
+                    severity="Low",
+                    risk_score=0.0,
+                    finding_status="Informational",
+                    signature_triggered="POST form has no detected anti-CSRF token; exploitability not verified",
+                    recommendation="Verify Origin/Referer validation and use a framework CSRF token for state-changing forms.",
+                    request_payload="",
+                    response_status=baseline_req.get("status_code", 200),
+                    response_size=baseline_req.get("response_size", 0),
+                    response_time=baseline_req.get("response_time", 0.0)
+                )
+                logger.info("Recorded passive CSRF candidate without submitting state-changing form: %s", base_ep_url)
             if baseline_is_frontend_shell:
                 endpoint_queue = [item for item in active_test_queue if item.get("type") == "Baseline_Inspection"]
                 logger.info("Skipping active payloads for frontend shell endpoint: %s", base_ep_url)

@@ -30,7 +30,7 @@ def targeted_discover(self):
         if parsed_path != target_path:
             continue
         existing = by_url.setdefault(self.base_url, dict(ep))
-        for key in ("form_fields", "query_fields"):
+        for key in ("form_fields", "query_fields", "csrf_token_fields", "json_fields", "request_content_types"):
             merged = list(dict.fromkeys((existing.get(key) or []) + (ep.get(key) or [])))
             if merged:
                 existing[key] = merged

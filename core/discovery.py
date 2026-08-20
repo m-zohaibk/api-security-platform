@@ -132,7 +132,7 @@ class EndpointDiscovery:
                 by_identifier[identifier] = dict(ep)
                 continue
             existing = by_identifier[identifier]
-            for key in ("form_fields", "query_fields", "json_fields"):
+            for key in ("form_fields", "query_fields", "json_fields", "request_content_types", "csrf_token_fields"):
                 merged = list(dict.fromkeys((existing.get(key) or []) + (ep.get(key) or [])))
                 if merged:
                     existing[key] = merged
@@ -196,6 +196,7 @@ class EndpointDiscovery:
                                         request_body = operation.get("requestBody") or {}
                                         content = request_body.get("content") if isinstance(request_body, dict) else {}
                                         if isinstance(content, dict):
+                                            endpoint["request_content_types"] = list(content.keys())
                                             for media_type in ("application/json", "application/*+json"):
                                                 media_schema = content.get(media_type, {}).get("schema", {}) if isinstance(content.get(media_type), dict) else {}
                                                 properties = media_schema.get("properties", {}) if isinstance(media_schema, dict) else {}
@@ -264,12 +265,19 @@ class EndpointDiscovery:
                                 field.get("name").strip(): field.get("value", "")
                                 for field in form_elements
                             }
+                            csrf_token_fields = [
+                                field.get("name").strip()
+                                for field in form_elements
+                                if field.get("type", "").lower() == "hidden"
+                                and any(token in field.get("name", "").lower() for token in ("csrf", "nonce", "token"))
+                            ]
                             self.discovered_endpoints.append({
                                 "url": form_url,
                                 "method": method,
                                 "form_method": method,
                                 "form_fields": field_names,
                                 "form_defaults": form_defaults,
+                                "csrf_token_fields": csrf_token_fields,
                                 "query_fields": self.query_fields(form_url)
                             })
 

@@ -44,6 +44,10 @@ class SignatureDetector:
             r"(?i)(?:\.\./){2,}[^\s]+",
             r"(?i)(?:php|file|data)://"
         ],
+        "XXE": [
+            r"(?is)<!DOCTYPE[^>]+(?:<!ENTITY|SYSTEM)",
+            r"(?i)file:///[A-Za-z0-9_./-]+"
+        ],
         "GraphQL_Introspection": [
             r"(?i)__schema",
             r"(?i)__typename"
@@ -87,6 +91,11 @@ class SignatureDetector:
         r"daemon:x:\d+:",
         r"nobody:x:\d+:",
         r"\[boot loader\]"
+    ]
+
+    XXE_OUTPUT_PATTERNS = LFI_OUTPUT_PATTERNS + [
+        r"(?i)localhost",
+        r"(?i)hostname"
     ]
 
     REQUIRED_SECURITY_HEADERS = [
@@ -223,7 +232,7 @@ class SignatureDetector:
         if expected_category == "SQL_Injection_Credential":
             expected_category = "SQL_Injection"
         categories = [expected_category] if expected_category in self.REGEX_RULES else []
-        categories += [category for category in ["SQL_Injection", "XSS", "Command_Injection", "Local_File_Inclusion", "GraphQL_Introspection", "Open_Redirect", "Auth_Weakness", "BOLA_IDOR"] if category != expected_category]
+        categories += [category for category in ["SQL_Injection", "XSS", "Command_Injection", "Local_File_Inclusion", "XXE", "GraphQL_Introspection", "Open_Redirect", "Auth_Weakness", "BOLA_IDOR"] if category != expected_category]
         for category in categories:
             rules = self.REGEX_RULES.get(category, [])
             for rule in rules:
@@ -335,6 +344,24 @@ class SignatureDetector:
                     confidence = "Low"
                     points = 10
                     proof_of_concept = "Redirect payload matched without an external 3xx Location response"
+
+            elif candidate_category == "XXE":
+                matched_xxe_sig = next((pattern for pattern in self.XXE_OUTPUT_PATTERNS if re.search(pattern, resp_body)), None)
+                is_xml_probe = bool(re.search(r"(?is)<!DOCTYPE[^>]+(?:<!ENTITY|SYSTEM)", payload)) and "xml" in content_type
+                if matched_xxe_sig and is_xml_probe and resp_status == 200 and resp_size > 0:
+                    matched = True
+                    has_proof = True
+                    finding_status = "Confirmed"
+                    confidence = "High"
+                    points = 40
+                    proof_of_concept = f"XML external entity expansion marker matched: {matched_xxe_sig}"
+                else:
+                    matched = True
+                    has_proof = False
+                    finding_status = "Suspected"
+                    confidence = "Low"
+                    points = 10
+                    proof_of_concept = "XXE entity syntax matched without XML content type and local canary proof"
 
             elif candidate_category == "Local_File_Inclusion":
                 matched_lfi_sig = next((pattern for pattern in self.LFI_OUTPUT_PATTERNS if re.search(pattern, resp_body)), None)

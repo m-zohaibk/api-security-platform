@@ -3,7 +3,7 @@
 **Repository:** [`m-zohaibk/api-security-platform`](https://github.com/m-zohaibk/api-security-platform)
 **Assessment date:** 2026-08-21
 **Assessment scope:** Current working version after the repository cleanup and the open-redirect capability improvement
-**Automated validation:** **71 tests passed**
+**Automated validation:** **76 tests passed**
 
 ## Executive Assessment
 
@@ -11,7 +11,7 @@ The previous gap assessment was substantially accurate about the scanner’s pro
 
 The platform is a **proof-oriented API and web-application scanner**, not yet a complete authenticated API security platform. It is strongest when a vulnerability can be established from a deterministic HTTP response marker. Confirmed findings require proof such as a database error, explicit delay response, unescaped reflection, command output, local-file content, or an external redirect response. Payload syntax, anomaly scores, and missing headers remain separate from confirmed vulnerability counts.
 
-The current implementation has been verified on authorized training targets. It confirmed command injection and reflected XSS on DVWA, confirmed LFI on DVWA, confirmed an external open redirect on the DVWA training endpoint, detected GraphQL introspection as informational on DVGA, matched the testasp manual score, and completed a safe-mode crAPI assessment without confirmed active-probe findings. The repository’s complete test suite now passes **71 tests**.
+The current implementation has been verified on authorized training targets. It confirmed command injection and reflected XSS on DVWA, confirmed LFI on DVWA, confirmed an external open redirect on the DVWA training endpoint, detected GraphQL introspection as informational on DVGA, matched the testasp manual score, and completed a safe-mode crAPI assessment without confirmed active-probe findings. The repository’s complete test suite now passes **76 tests**.
 
 ## What Changed Since the Previous Assessment
 
@@ -29,7 +29,7 @@ The repository cleanup removed older session-history reports and raw exploratory
 
 | Capability | Current implementation | Current verification | Remaining boundary |
 |---|---|---|---|
-| Endpoint discovery | Crawls HTML, parses OpenAPI/Swagger when available, extracts documented query and JSON fields, probes common paths, records forms, merges duplicate metadata, and applies `MAX_ENDPOINTS`. | Exercised across DVWA, DVGA, testasp, and crAPI; schema-binding is regression-tested. | Dynamic JavaScript routes, authenticated routes, and API routes revealed only after workflow actions may be missed. |
+| Endpoint discovery | Crawls HTML, parses OpenAPI/Swagger when available, extracts documented query, JSON, XML media types, and CSRF form metadata, probes common paths, records forms, merges duplicate metadata, and applies `MAX_ENDPOINTS`. | Exercised across DVWA, DVGA, testasp, crAPI, RestFlaw, and DVWA CSRF; schema and form metadata are regression-tested. | Dynamic JavaScript routes, authenticated routes, and API routes revealed only after workflow actions may be missed. |
 | HTTP transport | Supports GET, POST, PUT, PATCH, DELETE, named query/form/JSON fields, empty JSON objects, custom headers, async requests, and explicit redirect-following control. | Regression-tested and used on real training targets. | No persistent connection pool across all sync requests; discovery remains mostly sequential. |
 | Bounded performance | Active probes are dispatched with bounded concurrency through `ACTIVE_CONCURRENCY`; analysis and SQLite writes remain sequential. | Broader DVWA run completed in 216 seconds with four workers after a prior sequential timeout. | Discovery is still a significant sequential cost; no adaptive host rate control or progress ETA. |
 | SQL injection | Tests error-based and selected time-based SQLi, with explicit delay payload requirements and credential/login JSON routing. | Timing false positive removed on DVWA; credential endpoint compared on crAPI. | Blind SQLi differential analysis, broad DBMS payload families, and authenticated parameter coverage are missing. |
@@ -42,6 +42,8 @@ The repository cleanup removed older session-history reports and raw exploratory
 | GraphQL introspection | Discovers `/graphql` and `/graphiql`, sends structured introspection JSON, and classifies schema exposure as informational. | Manually verified on DVGA with 12 query fields. | No field authorization, mutation safety, depth/alias abuse, resolver injection, batching, or GraphQL rate-limit testing. |
 | Security misconfiguration | Checks configured security headers and separates observations from confirmed vulnerability totals. | Observed on training targets, including crAPI. | Header policy is generic and does not yet account for route role, TLS policy, browser context, or API-specific risk. |
 | Verbose errors | Detects configured stack traces, SQL errors, and runtime exception signatures. | Covered by regression tests and pipeline behavior. | No systematic error-trigger matrix, secret classification, or stack-trace normalization. |
+| CSRF form exposure | Passively identifies explicit CSRF routes with state-changing GET/POST/PUT/PATCH/DELETE forms that have no detected hidden token; never submits the state-changing form automatically. | Manually inspected DVWA; scanner reproduced the missing-token observation as Informational. | No browser Origin/Referer exploit proof, cookie/SameSite analysis, or safe reversible authenticated workflow. |
+| XXE | Routes OpenAPI-declared XML request bodies to a non-destructive external-entity canary and confirms only XML response plus local canary proof. | Regression-tested; RestFlaw manual and scanner runs both lacked proof, so no confirmed XXE was claimed. | Live RestFlaw deployment’s `/search` did not expose the canary and `/tokens` required JSON; no confirmed live XXE yet. |
 | Sensitive data exposure | Detects configured password, secret, token, and API-key patterns and supports sensitive-data-aware BOLA proof. | Covered by regression tests and used in risk gating. | No entropy analysis, structured secret scanner, PII classification, or response-field sensitivity model. |
 | ML/DL triage | Combines Isolation Forest, LSTM, and autoencoder signals in risk scoring. | Pipeline behavior is tested; missing datasets no longer receive fabricated labels. | Models are not evidence of exploitability and are not validated against a representative labeled API corpus. |
 
@@ -76,15 +78,15 @@ The following table distinguishes gaps that are still absent from capabilities t
 
 The current version includes proof-gated confirmed counts, explicit suspected wording, form-aware payload binding, method-aware routing, GraphQL-specific probing, LFI proof checks, credential SQLi routing, SPA-shell suppression, blocked-response gates, and bounded active-probe concurrency.
 
-The latest improvement adds open-redirect capability. The request engine can now preserve a 3xx response by disabling redirect following for a specific probe. Redirect-like paths and discovered `redirect` query fields receive an external destination canary. The signature layer confirms the finding only when the response is a 3xx and its `Location` header resolves to a different host. Relative redirects and payload syntax without an external `Location` remain suspected.
+The latest improvements add open-redirect capability, schema-aware XML/XXE routing, and passive CSRF form inspection. The request engine can now preserve a 3xx response by disabling redirect following for a specific probe. Redirect-like paths and discovered `redirect` query fields receive an external destination canary. The signature layer confirms the finding only when the response is a 3xx and its `Location` header resolves to a different host. Relative redirects and payload syntax without an external `Location` remain suspected.
 
-The improvement was tested against the authorized DVWA training endpoint. A manual request returned HTTP 302 with:
+The open-redirect improvement was tested against the authorized DVWA training endpoint. A manual request returned HTTP 302 with:
 
 ```text
 Location: https://example.com/api-security-redirect-check
 ```
 
-The improved scanner reproduced the same behavior and persisted one confirmed `Open_Redirect` finding with the same external destination. The same release also adds OpenAPI request-body field extraction and bounded BOLA probes for discovered user/account/profile object routes. Focused and full regression coverage increased the suite from 64 to **71 passing tests**, including transport preservation, external-location proof, relative-redirect non-confirmation, redirect-route selection, schema-aware JSON binding, and BOLA route selection.
+The improved scanner reproduced the same behavior and persisted one confirmed `Open_Redirect` finding with the same external destination. The same release also adds OpenAPI request-body field extraction and bounded BOLA probes for discovered user/account/profile object routes. Focused and full regression coverage increased the suite from 64 to **76 passing tests**, including transport preservation, external-location proof, relative-redirect non-confirmation, redirect-route selection, schema-aware JSON/XML binding, BOLA route selection, and passive CSRF form detection.
 
 ## Priority Roadmap
 
