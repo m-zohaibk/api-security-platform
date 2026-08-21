@@ -323,6 +323,26 @@ def test_endpoint_dedup_prefers_real_form_method_over_link_method():
     }]
 
 
+def test_generic_linux_server_information_is_not_command_execution_proof():
+    result = SignatureDetector().analyze(
+        {
+            "url": "http://example.test/phpinfo.php",
+            "payload": "; cat /etc/passwd",
+            "status_code": 200,
+            "response_size": 1200,
+            "response_time": 0.2,
+            "response_headers": {"Content-Type": "text/html"},
+            "response_body": "Linux training-host 6.8.0-31-generic",
+            "request_headers": {},
+            "attack_category": "Command_Injection",
+        }
+    )
+    assert result["attack_type"] == "Command_Injection"
+    assert result["finding_status"] == "Suspected"
+    assert result["has_proof"] is False
+    assert result["is_vulnerable"] is False
+
+
 def test_expected_attack_category_prevents_command_payload_sql_misclassification():
     result = SignatureDetector().analyze(
         {

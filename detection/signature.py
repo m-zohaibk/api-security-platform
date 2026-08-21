@@ -82,7 +82,6 @@ class SignatureDetector:
     CMD_OUTPUT_PATTERNS = [
         r"root:x:0:0:",
         r"uid=\d+\(.*\)\s+gid=\d+",
-        r"Linux\s+[\w\.-]+\s+\d+\.\d+",
         r"Windows\s+IP\s+Configuration"
     ]
 
