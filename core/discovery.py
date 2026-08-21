@@ -75,7 +75,12 @@ class EndpointDiscovery:
     ]
 
     def __init__(self, base_url: str, timeout: float = 10.0, max_depth: int = 3):
-        self.base_url = base_url.rstrip("/")
+        parsed_input = urlparse(base_url)
+        normalized_input_path = parsed_input.path
+        if normalized_input_path.endswith("/."):
+            normalized_input_path = normalized_input_path[:-2] + "/"
+        normalized_input = parsed_input._replace(path=normalized_input_path).geturl()
+        self.base_url = normalized_input.rstrip("/") if not parsed_input.query else normalized_input
         parsed = urlparse(self.base_url)
         self.domain = parsed.netloc
         self.scheme = parsed.scheme or "http"
@@ -95,8 +100,11 @@ class EndpointDiscovery:
     def normalize_url(self, url: str, base: str = "") -> str:
         joined = urljoin(base or self.base_url, url)
         parsed = urlparse(joined)
+        normalized_path = parsed.path
+        if normalized_path.endswith("/."):
+            normalized_path = normalized_path[:-2] + "/"
         query_part = f"?{parsed.query}" if parsed.query else ""
-        return f"{parsed.scheme}://{parsed.netloc}{parsed.path}{query_part}"
+        return f"{parsed.scheme}://{parsed.netloc}{normalized_path}{query_part}"
 
     OPENAPI_SPEC_PATHS = [
         "/openapi.json",

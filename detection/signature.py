@@ -375,7 +375,12 @@ class SignatureDetector:
                 location = next((str(value) for key, value in resp_headers.items() if str(key).lower() == "location"), "")
                 resolved_location = urlsplit(urljoin(url, location)) if location else None
                 base_location = urlsplit(url)
-                is_external = bool(resolved_location and resolved_location.netloc and resolved_location.netloc != base_location.netloc)
+                # Reverse proxies and canonical URL handlers may redirect between
+                # schemes or ports on the same host. Treat those as same-site
+                # canonicalization, not proof of an unvalidated external redirect.
+                resolved_hostname = (resolved_location.hostname or "").lower() if resolved_location else ""
+                base_hostname = (base_location.hostname or "").lower()
+                is_external = bool(resolved_hostname and resolved_hostname != base_hostname)
                 if 300 <= int(resp_status or 0) < 400 and is_external:
                     matched = True
                     has_proof = True

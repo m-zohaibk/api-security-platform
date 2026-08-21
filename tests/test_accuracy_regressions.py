@@ -225,6 +225,17 @@ def test_stored_xss_module_skips_persistent_probe():
     assert [item["type"] for item in selected] == ["Baseline_Inspection"]
 
 
+def test_discovery_normalizes_dot_segment_query_route_without_losing_origin():
+    from core.discovery import EndpointDiscovery
+
+    discovery = EndpointDiscovery(
+        "https://pentest-ground.com:4280/vulnerabilities/fi/.?page=include.php",
+        timeout=1,
+    )
+    assert discovery.base_url == "https://pentest-ground.com:4280/vulnerabilities/fi/?page=include.php"
+    assert discovery.normalize_url("https://pentest-ground.com:4280/vulnerabilities/fi/.?page=include.php") == discovery.base_url
+
+
 def test_endpoint_dedup_merges_form_metadata(monkeypatch):
     from core.discovery import EndpointDiscovery
 
@@ -632,6 +643,24 @@ def test_external_open_redirect_requires_external_location_proof():
     assert result["attack_type"] == "Open_Redirect"
     assert result["finding_status"] == "Confirmed"
     assert result["is_vulnerable"] is True
+
+
+def test_same_host_canonicalization_redirect_is_not_confirmed_as_open_redirect():
+    result = SignatureDetector().analyze(
+        {
+            "url": "https://pentest-ground.com:4280/vulnerabilities/open_redirect/",
+            "payload": "https://example.com/api-security-redirect-check",
+            "attack_category": "Open_Redirect",
+            "status_code": 301,
+            "response_size": 446,
+            "response_headers": {"Location": "http://pentest-ground.com/vulnerabilities/open_redirect/?q=https%3A%2F%2Fexample.com%2Fapi-security-redirect-check"},
+            "response_body": "",
+            "request_headers": {},
+        }
+    )
+    assert result["attack_type"] == "Open_Redirect"
+    assert result["finding_status"] == "Suspected"
+    assert result["is_vulnerable"] is False
 
 
 def test_relative_redirect_is_not_confirmed_as_open_redirect():
