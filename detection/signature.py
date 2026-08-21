@@ -143,6 +143,23 @@ class SignatureDetector:
                             patterns[category].append(line_clean)
         return patterns
 
+    @staticmethod
+    def _body_difference_ratio(baseline_body: str, response_body: str) -> float:
+        baseline = (baseline_body or "").strip()
+        current = (response_body or "").strip()
+        if not baseline and not current:
+            return 0.0
+        if not baseline or not current:
+            return 1.0
+        common = 0
+        for left, right in zip(baseline, current):
+            if left != right:
+                break
+            common += 1
+        prefix_ratio = common / max(len(baseline), len(current))
+        length_ratio = abs(len(baseline) - len(current)) / max(len(baseline), len(current))
+        return round(min(1.0, max(1.0 - prefix_ratio, length_ratio)), 4)
+
     def analyze(self, telemetry_data: Dict[str, Any], baseline_telemetry: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Analyzes HTTP telemetry for known attack patterns and enforces strict Proof Verifiers.
@@ -156,6 +173,8 @@ class SignatureDetector:
         resp_time = telemetry_data.get("response_time", 0.0)
         resp_headers = telemetry_data.get("response_headers", {}) or {}
         resp_body = telemetry_data.get("response_body", "") or ""
+        baseline_body = (baseline_telemetry or {}).get("response_body", "") or ""
+        retry_after = next((str(value) for key, value in resp_headers.items() if str(key).lower() == "retry-after"), "")
 
         target_string = f"{url} {payload}"
         content_type = str(resp_headers.get("content-type", "") or resp_headers.get("Content-Type", "")).lower()
@@ -204,6 +223,22 @@ class SignatureDetector:
                 "points": 0,
                 "proof_of_concept": "Payload was not processed by an API; target returned the frontend shell",
                 "missing_headers": []
+            }
+
+        # Rate-limit observation is useful telemetry but is not a vulnerability proof.
+        if retry_after:
+            return {
+                "matched": True,
+                "has_proof": False,
+                "is_vulnerable": False,
+                "attack_type": "Rate_Limit_Observation",
+                "pattern_matched": "HTTP 429 or Retry-After response observed",
+                "finding_status": "Informational",
+                "confidence": "High",
+                "points": 0,
+                "proof_of_concept": f"Rate-limit signal observed; HTTP {resp_status}, Retry-After={retry_after or 'absent'}",
+                "missing_headers": [],
+                "response_diff": {"retry_after": retry_after, "status_changed": False, "body_difference_ratio": 0.0, "size_delta": 0, "time_delta": 0.0}
             }
 
         # Hard Response Gate 2: WAF Block / Edge Block / 404 Not Found
@@ -259,6 +294,10 @@ class SignatureDetector:
         baseline_status = baseline_telemetry.get("status_code", 200) if baseline_telemetry else 200
 
         time_delta = max(0.0, resp_time - baseline_time)
+        size_delta = resp_size - baseline_size
+        body_difference_ratio = self._body_difference_ratio(baseline_body, resp_body)
+        status_changed = resp_status != baseline_status
+        differential_signal = bool(baseline_telemetry) and (status_changed or abs(size_delta) >= 64 or body_difference_ratio >= 0.25)
 
         # Strict Proof Verifiers Criteria (Section 3)
         if candidate_category:
@@ -304,9 +343,16 @@ class SignatureDetector:
                     matched = True
                     has_proof = False
                     finding_status = "Suspected"
-                    confidence = "Low"
-                    points = 10
-                    proof_of_concept = "SQL parameter payload syntax matched without database error or execution time delay"
+                    confidence = "Medium" if differential_signal else "Low"
+                    points = 15 if differential_signal else 10
+                    if differential_signal:
+                        proof_of_concept = (
+                            "SQL parameter payload caused a differential response without database-error or timing proof: "
+                            f"status_changed={status_changed}, size_delta={size_delta}, "
+                            f"body_difference_ratio={body_difference_ratio:.4f}"
+                        )
+                    else:
+                        proof_of_concept = "SQL parameter payload syntax matched without database error, differential response, or execution time delay"
 
             elif candidate_category == "GraphQL_Introspection":
                 matched_graphql = bool(re.search(r'(?i)"__schema"|"queryType"|"__typename"', resp_body))
@@ -486,6 +532,19 @@ class SignatureDetector:
                     proof_of_concept = f"Sensitive credentials exposed in response: {sens_pat}"
                     break
 
+        # Passive CORS policy check. This is informational and never a confirmed exploit.
+        allow_origin = next((str(value).strip() for key, value in resp_headers.items() if str(key).lower() == "access-control-allow-origin"), "")
+        allow_credentials = next((str(value).strip().lower() for key, value in resp_headers.items() if str(key).lower() == "access-control-allow-credentials"), "")
+        if not matched and allow_origin == "*" and allow_credentials == "true":
+            matched = True
+            has_proof = False
+            attack_type = "CORS_Misconfiguration"
+            pattern_matched = "Access-Control-Allow-Origin: * with credentials enabled"
+            finding_status = "Informational"
+            confidence = "High"
+            points = 0
+            proof_of_concept = "Permissive cross-origin policy allows any origin while credentials are enabled; browser exploitability requires origin and cookie-context verification"
+
         # Missing Security Headers Check
         missing_headers = []
         resp_headers_lower = {k.lower(): v for k, v in resp_headers.items()}
@@ -513,7 +572,16 @@ class SignatureDetector:
             "confidence": confidence,
             "points": min(points, 40),
             "proof_of_concept": proof_of_concept or ("No vulnerability proof criteria met" if not has_proof else "Vulnerability proof verified"),
-            "missing_headers": missing_headers
+            "missing_headers": missing_headers,
+            "cors_policy": {"allow_origin": allow_origin, "allow_credentials": allow_credentials},
+            "response_diff": {
+                "retry_after": retry_after,
+                "status_changed": status_changed,
+                "body_difference_ratio": body_difference_ratio,
+                "size_delta": size_delta,
+                "time_delta": round(time_delta, 4),
+                "differential_signal": differential_signal,
+            }
         }
 
 

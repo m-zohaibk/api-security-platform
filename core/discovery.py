@@ -132,7 +132,7 @@ class EndpointDiscovery:
                 by_identifier[identifier] = dict(ep)
                 continue
             existing = by_identifier[identifier]
-            for key in ("form_fields", "query_fields", "json_fields", "request_content_types", "csrf_token_fields"):
+            for key in ("form_fields", "query_fields", "json_fields", "request_content_types", "csrf_token_fields", "security_requirements"):
                 merged = list(dict.fromkeys((existing.get(key) or []) + (ep.get(key) or [])))
                 if merged:
                     existing[key] = merged
@@ -141,6 +141,8 @@ class EndpointDiscovery:
             if ep.get("form_method"):
                 existing["form_method"] = ep["form_method"]
                 existing["method"] = ep["form_method"]
+            if ep.get("operation_id"):
+                existing["operation_id"] = ep["operation_id"]
 
         unique_endpoints = list(by_identifier.values())
         self.discovered_endpoints = unique_endpoints
@@ -185,6 +187,8 @@ class EndpointDiscovery:
                                         "method": http_method.upper()
                                     }
                                     if isinstance(operation, dict):
+                                        endpoint["operation_id"] = operation.get("operationId", "")
+                                        endpoint["security_requirements"] = operation.get("security", spec_data.get("security", [])) or []
                                         parameters = operation.get("parameters") or []
                                         query_fields = [
                                             parameter.get("name")

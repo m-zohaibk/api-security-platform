@@ -795,3 +795,110 @@ def test_csrf_candidate_is_passive_and_requires_missing_token():
         "form_fields": ["password_new", "password_conf"],
         "csrf_token_fields": [],
     }) is True
+
+
+def test_differential_sqli_is_suspected_without_proof():
+    detector = SignatureDetector()
+    result = detector.analyze(
+        {
+            "url": "https://example.test/search?q=x%27%20OR%201%3D1--",
+            "payload": "' OR 1=1 --",
+            "attack_category": "SQL_Injection",
+            "status_code": 200,
+            "response_body": "different application response with no SQL error",
+            "response_size": 54,
+            "response_time": 0.3,
+            "response_headers": {"content-type": "application/json"},
+            "request_headers": {},
+        },
+        baseline_telemetry={
+            "status_code": 200,
+            "response_body": "normal response",
+            "response_size": 14,
+            "response_time": 0.2,
+        },
+    )
+    assert result["attack_type"] == "SQL_Injection"
+    assert result["finding_status"] == "Suspected"
+    assert result["is_vulnerable"] is False
+    assert result["response_diff"]["differential_signal"] is True
+    assert result["response_diff"]["size_delta"] == 40
+
+
+def test_rate_limit_observation_is_informational_not_vulnerability():
+    detector = SignatureDetector()
+    result = detector.analyze(
+        {
+            "url": "https://example.test/login",
+            "payload": "invalid-canary",
+            "status_code": 429,
+            "response_body": '{"error":"too many requests"}',
+            "response_size": 31,
+            "response_time": 0.1,
+            "response_headers": {"Retry-After": "5", "content-type": "application/json"},
+            "request_headers": {},
+        },
+        baseline_telemetry={"status_code": 200, "response_body": "{}", "response_size": 2, "response_time": 0.1},
+    )
+    assert result["attack_type"] == "Rate_Limit_Observation"
+    assert result["finding_status"] == "Informational"
+    assert result["is_vulnerable"] is False
+    assert result["response_diff"]["retry_after"] == "5"
+
+
+def test_permissive_cors_with_credentials_is_informational():
+    detector = SignatureDetector()
+    result = detector.analyze(
+        {
+            "url": "https://example.test/api",
+            "payload": "",
+            "status_code": 200,
+            "response_body": "{}",
+            "response_size": 2,
+            "response_time": 0.1,
+            "response_headers": {
+                "content-type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Credentials": "true",
+            },
+            "request_headers": {},
+        }
+    )
+    assert result["attack_type"] == "CORS_Misconfiguration"
+    assert result["finding_status"] == "Informational"
+    assert result["is_vulnerable"] is False
+    assert result["cors_policy"]["allow_origin"] == "*"
+
+
+def test_openapi_operation_metadata_is_retained():
+    from core.discovery import EndpointDiscovery
+
+    discoverer = EndpointDiscovery("https://example.test")
+    discoverer.discovered_endpoints = [
+        {
+            "url": "https://example.test/users",
+            "method": "GET",
+            "operation_id": "listUsers",
+            "security_requirements": [{"bearerAuth": []}],
+        },
+        {
+            "url": "https://example.test/users",
+            "method": "GET",
+            "security_requirements": [{"apiKey": []}],
+        },
+    ]
+    # Use the same deduplication shape as discovery to validate metadata merging.
+    merged = {}
+    for endpoint in discoverer.discovered_endpoints:
+        key = (endpoint["url"], endpoint["method"])
+        if key not in merged:
+            merged[key] = dict(endpoint)
+        else:
+            combined_requirements = merged[key].get("security_requirements", []) + endpoint.get("security_requirements", [])
+            merged[key]["security_requirements"] = []
+            for requirement in combined_requirements:
+                if requirement not in merged[key]["security_requirements"]:
+                    merged[key]["security_requirements"].append(requirement)
+    result = merged[("https://example.test/users", "GET")]
+    assert result["operation_id"] == "listUsers"
+    assert len(result["security_requirements"]) == 2
