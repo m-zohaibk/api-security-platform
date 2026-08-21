@@ -432,7 +432,9 @@ class PlatformEvaluator:
             "owasp_api_top_10_coverage": owasp_coverage
         }
 
-        out_file = Path(DATASETS_DIR) / "evaluation_results.json"
+        out_dir = Path(DATASETS_DIR)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        out_file = out_dir / "evaluation_results.json"
         with open(out_file, "w", encoding="utf-8") as f:
             json.dump(results_payload, f, indent=2)
 

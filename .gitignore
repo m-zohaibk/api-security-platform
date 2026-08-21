@@ -31,6 +31,8 @@ models/
 # Raw and Processed Datasets
 datasets/raw/
 datasets/processed/
+datasets/self_generated/
+datasets/evaluation_results.json
 
 # Generated Export Reports
 reports/*.pdf
