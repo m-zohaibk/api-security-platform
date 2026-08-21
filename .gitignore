@@ -38,6 +38,7 @@ datasets/evaluation_results.json
 reports/*.pdf
 reports/*.json
 reports/*.html
+reports/*.sarif
 
 # IDE / Editor Files
 .vscode/

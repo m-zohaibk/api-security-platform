@@ -18,6 +18,7 @@ class RiskScorer:
     MAX_ML_POINTS = 25.0
     MAX_LSTM_POINTS = 15.0
     MAX_AE_POINTS = 20.0
+    MAX_SUPERVISED_POINTS = 10.0
     MAX_TOTAL_POINTS = 100.0
 
     SEVERITY_RECOMMENDATIONS = {
@@ -102,6 +103,7 @@ class RiskScorer:
                     "ml_points": 0.0,
                     "lstm_points": 0.0,
                     "autoencoder_points": 0.0,
+                    "supervised_points": 0.0,
                     "raw_total_points": 0.0
                 },
                 "signature_result": signature_result,
@@ -137,6 +139,7 @@ class RiskScorer:
                     "ml_points": 0.0,
                     "lstm_points": 0.0,
                     "autoencoder_points": 0.0,
+                    "supervised_points": 0.0,
                     "raw_total_points": 0.0
                 },
                 "signature_result": signature_result,
@@ -149,6 +152,7 @@ class RiskScorer:
         ml_points = min(float(ml_result.get("points", 0.0)), self.MAX_ML_POINTS)
         lstm_points = min(float(dl_result.get("lstm_points", 0.0)), self.MAX_LSTM_POINTS)
         ae_points = min(float(dl_result.get("autoencoder_points", 0.0)), self.MAX_AE_POINTS)
+        supervised_points = min(float(ml_result.get("supervised_points", 0.0)), self.MAX_SUPERVISED_POINTS)
 
         # Triggered Layer Conditions. A signature match is a detection signal;
         # proof is a stricter condition that is required before declaring a
@@ -168,7 +172,7 @@ class RiskScorer:
         confidence, layers_triggered = self.calculate_hybrid_confidence(signature_triggered, ml_is_anomaly, dl_is_suspicious)
 
         # Calculate combined total score with confidence weighting
-        raw_total = sig_points + ml_points + lstm_points + ae_points
+        raw_total = sig_points + ml_points + lstm_points + ae_points + supervised_points
         final_risk_score = round(min(self.MAX_TOTAL_POINTS, raw_total * confidence), 2)
         severity = self.classify_severity(final_risk_score)
 
@@ -219,6 +223,7 @@ class RiskScorer:
                 "ml_points": ml_points,
                 "lstm_points": lstm_points,
                 "autoencoder_points": ae_points,
+                "supervised_points": supervised_points,
                 "raw_total_points": raw_total,
                 "confidence_multiplier": confidence
             },

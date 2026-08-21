@@ -27,6 +27,7 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 # Central Directory Paths
 PAYLOADS_DIR = os.path.join(BASE_DIR, "payloads")
 MODELS_DIR   = os.path.join(BASE_DIR, "models")
+TABULAR_RANKER_PATH = os.path.join(MODELS_DIR, "tabular_ranker.pkl")
 DATASETS_DIR = os.path.join(BASE_DIR, "datasets")
 REPORTS_DIR  = os.path.join(BASE_DIR, "reports")
 

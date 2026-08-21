@@ -8,7 +8,7 @@ import joblib
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config.logging_config import logger
-from config.settings import ISOLATION_FOREST_PATH
+from config.settings import ISOLATION_FOREST_PATH, TABULAR_RANKER_PATH
 
 class MLAnomalyDetector:
     """
@@ -40,8 +40,10 @@ class MLAnomalyDetector:
     def __init__(self, model_path: Optional[str] = None):
         self.model_path = Path(model_path) if model_path else Path(ISOLATION_FOREST_PATH)
         self.scaler_path = self.model_path.parent / "feature_scaler.pkl"
+        self.ranker_path = Path(TABULAR_RANKER_PATH)
         self.model = self._load_model()
         self.scaler = self._load_scaler()
+        self.ranker = self._load_ranker()
 
     def _load_model(self) -> Optional[Any]:
         if not self.model_path.exists():
@@ -63,18 +65,45 @@ class MLAnomalyDetector:
         except Exception:
             return None
 
+    def _load_ranker(self) -> Optional[Any]:
+        if not self.ranker_path.exists():
+            return None
+        try:
+            artifact = joblib.load(self.ranker_path)
+            return artifact.get("model") if isinstance(artifact, dict) else artifact
+        except Exception as exc:
+            logger.warning(f"Calibrated tabular ranker could not be loaded: {exc}")
+            return None
+
+    def _ranker_signal(self, features_array: np.ndarray) -> Dict[str, Any]:
+        if self.ranker is None:
+            return {"supervised_probability": 0.0, "supervised_points": 0.0, "ranker_available": False}
+        try:
+            probability = float(self.ranker.predict_proba(features_array)[0][1])
+            probability = float(np.clip(probability, 0.0, 1.0))
+            return {
+                "supervised_probability": round(probability, 4),
+                "supervised_points": round(probability * 10.0, 2),
+                "ranker_available": True,
+            }
+        except Exception as exc:
+            logger.warning(f"Calibrated tabular ranker inference failed: {exc}")
+            return {"supervised_probability": 0.0, "supervised_points": 0.0, "ranker_available": False}
+
     def predict(self, feature_dict: Dict[str, Any]) -> Dict[str, Any]:
         """
         Runs Isolation Forest anomaly prediction on the extracted feature vector (schema defined by FEATURE_KEYS).
         Returns normalized anomaly score (0.0 to 1.0) and points (0 to 25).
         """
         if self.model is None:
-            return {
+            result = {
                 "is_anomaly": False,
                 "anomaly_score": 0.0,
                 "points": 0,
                 "note": "Model file missing"
             }
+            result.update(self._ranker_signal(np.array([[feature_dict.get(k, 0) for k in self.FEATURE_KEYS]], dtype=float)))
+            return result
 
         # Extract feature vector in correct ordered array shape
         if "feature_vector" in feature_dict and len(feature_dict["feature_vector"]) == len(self.FEATURE_KEYS):
@@ -84,11 +113,13 @@ class MLAnomalyDetector:
 
         features_array = np.array(vector, dtype=float).reshape(1, -1)
 
+        ranker_features = features_array.copy()
         if self.scaler is not None:
             try:
                 features_array = self.scaler.transform(features_array)
             except Exception:
                 pass
+        ranker_signal = self._ranker_signal(ranker_features)
 
         try:
             # Raw decision function output (lower values indicate higher anomaly likelihood)
@@ -106,7 +137,8 @@ class MLAnomalyDetector:
                 "is_anomaly": is_anomaly,
                 "anomaly_score": round(normalized_score, 4),
                 "points": min(points, 25.0),
-                "note": "Model prediction complete"
+                "note": "Model prediction complete",
+                **ranker_signal,
             }
         except Exception as exc:
             logger.error(f"Error executing Isolation Forest inference: {exc}")
@@ -114,7 +146,8 @@ class MLAnomalyDetector:
                 "is_anomaly": False,
                 "anomaly_score": 0.0,
                 "points": 0,
-                "note": f"Inference error: {exc}"
+                "note": f"Inference error: {exc}",
+                **ranker_signal,
             }
 
 
