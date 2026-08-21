@@ -17,6 +17,7 @@ from detection.signature import SignatureDetector
 from detection.ml_model import MLAnomalyDetector
 from detection.deep_learning import DeepLearningDetector
 from detection.risk_scorer import RiskScorer
+from main import run_pipeline
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
@@ -35,181 +36,10 @@ def start_scan():
     if not target_url:
         return redirect(url_for("dashboard.index"))
 
-    # Selected Inspection Modules — default all to True if not explicitly parameterized
-    has_explicit_modules = any(k.startswith("module_") for k in request.form.keys())
-    if has_explicit_modules:
-        module_sqli = request.form.get("module_sqli") == "on"
-        module_xss = request.form.get("module_xss") == "on"
-        module_bola = request.form.get("module_bola") == "on"
-        module_auth = request.form.get("module_auth") == "on"
-        module_cmd = request.form.get("module_cmd") == "on"
-    else:
-        module_sqli = True
-        module_xss = True
-        module_bola = True
-        module_auth = True
-        module_cmd = True
-
-    # Active Scan Engine Pipeline Execution
-    discoverer = EndpointDiscovery(base_url=target_url)
-    discovered_endpoints = discoverer.discover()
-    if not discovered_endpoints:
-        discovered_endpoints = [{"url": target_url, "method": "GET"}]
-
-    request_engine = RequestEngine()
-    response_parser = ResponseParser()
-    signature_detector = SignatureDetector()
-    ml_detector = MLAnomalyDetector()
-    dl_detector = DeepLearningDetector()
-    risk_scorer = RiskScorer()
-
-    # Save Session
-    session_obj = save_scan_session(target_url=target_url, total_endpoints=len(discovered_endpoints))
-
-    total_risk_scores = []
-    vulnerability_count = 0
-
-    # Build active test payloads based on selected modules
-    active_test_queue = []
-    
-    if module_sqli:
-        active_test_queue.append({"type": "SQL_Injection", "payload": "{\"username\": \"admin' OR 1=1 --\", \"password\": \"pass\"}", "method": "POST", "headers": {"Content-Type": "application/json"}})
-        active_test_queue.append({"type": "SQL_Injection_GET", "payload": "' OR 1=1 --", "method": "GET"})
-    if module_xss:
-        active_test_queue.append({"type": "Cross_Site_Scripting", "payload": "<script>alert('xss')</script>", "method": "POST"})
-    if module_cmd:
-        active_test_queue.append({"type": "Command_Injection", "payload": "; cat /etc/passwd", "method": "GET"})
-    if module_auth:
-        active_test_queue.append({"type": "Broken_Authentication", "payload": "", "method": "GET", "headers": {"Authorization": "Bearer null"}})
-    if module_bola:
-        for uid in [1, 2, 3, 999]:
-            active_test_queue.append({
-                "type": "BOLA_IDOR",
-                "payload": f"id={uid}",
-                "method": "GET",
-                "path_suffix": f"/users/v1/{uid}"
-            })
-
-    # Fallback to standard baseline if no module selected
-    if not active_test_queue:
-        active_test_queue.append({"type": "Baseline_Inspection", "payload": "", "method": "GET"})
-
-    for ep_info in discovered_endpoints:
-        base_ep_url = ep_info["url"]
-        default_method = ep_info["method"]
-
-        ep_obj = save_endpoint(session_id=session_obj.id, url=base_ep_url, method=default_method)
-
-        # Baseline request — get normal response parameters
-        baseline_req = request_engine.send_request(default_method, base_ep_url)
-        baseline_size = baseline_req.get("response_size", 0)
-        baseline_status = baseline_req.get("status_code", 200)
-        baseline_time = baseline_req.get("response_time", 0.0)
-        baseline_telemetry = {
-            "status_code": baseline_status,
-            "response_size": baseline_size,
-            "response_time": baseline_time
-        }
-
-        for test_item in active_test_queue:
-            # Handle path suffix safely for BOLA testing
-            path_suffix = test_item.get("path_suffix", "")
-            if path_suffix:
-                if base_ep_url.rstrip("/").endswith(path_suffix.strip("/")):
-                    test_url = base_ep_url
-                else:
-                    test_url = base_ep_url.rstrip("/") + path_suffix
-            else:
-                test_url = base_ep_url
-
-            test_method = test_item.get("method", default_method)
-            payload_str = test_item.get("payload", "")
-            custom_headers = test_item.get("headers", None)
-
-            # Dispatch HTTP Request with payload
-            req_data = request_engine.send_request(test_method, test_url, payload=payload_str, custom_headers=custom_headers)
-
-            # Baseline differential check — only skip if response is identical AND contains no error indicators
-            current_size = req_data.get("response_size", 0)
-            current_status = req_data.get("status_code", 200)
-            response_body = req_data.get("response_body", "")
-
-            error_indicators = [
-                "error", "sql", "syntax", "warning",
-                "exception", "invalid", "undefined",
-                "mysql", "ora-", "pg::", "sqlite", "traceback"
-            ]
-            has_error = any(ind in response_body.lower() for ind in error_indicators)
-
-            if (current_size == baseline_size 
-                and current_status == baseline_status
-                and current_size > 0
-                and not has_error
-                and test_item["type"] not in ["Baseline_Inspection"]):
-                req_data["payload_had_effect"] = False
-            else:
-                req_data["payload_had_effect"] = True
-
-            # Security misconfiguration is always valid regardless of baseline comparison
-            if test_item["type"] == "Baseline_Inspection":
-                req_data["payload_had_effect"] = True
-
-            features = response_parser.extract_features(req_data)
-
-            # Detection Layers
-            sig_res = signature_detector.analyze(req_data, baseline_telemetry=baseline_telemetry)
-            ml_res = ml_detector.predict(features)
-            dl_res = dl_detector.analyze(payload_str, features)
-
-            risk_summary = risk_scorer.calculate_risk(
-                signature_result=sig_res,
-                ml_result=ml_res,
-                dl_result=dl_res,
-                endpoint_url=test_url,
-                http_method=test_method,
-                payload_had_effect=req_data.get("payload_had_effect", True),
-                telemetry_data=req_data
-            )
-
-            score = risk_summary["total_score"]
-            severity = risk_summary["severity"]
-            total_risk_scores.append(score)
-
-            attack_name = test_item["type"] if sig_res.get("is_vulnerable") or score > 0.0 else sig_res.get("attack_type", "None")
-
-            if sig_res.get("is_vulnerable") or score > 0.0:
-                vulnerability_count += 1
-
-            # Only save meaningful findings with risk score or triggered signatures
-            if score > 0 or sig_res.get("is_vulnerable") or sig_res.get("matched"):
-                save_finding(
-                    session_id=session_obj.id,
-                    endpoint_id=ep_obj.id,
-                    attack_type=attack_name,
-                    severity=severity,
-                    risk_score=score,
-                    finding_status=risk_summary.get("finding_status", "Informational"),
-                    signature_triggered=sig_res.get("proof_of_concept") or sig_res.get("pattern_matched", ""),
-                    ml_score=ml_res.get("points", 0.0),
-                    lstm_score=dl_res.get("lstm_points", 0.0),
-                    autoencoder_score=dl_res.get("autoencoder_points", 0.0),
-                    recommendation=risk_summary.get("recommendation", ""),
-                    request_payload=payload_str,
-                    response_status=req_data.get("status_code", 200),
-                    response_size=req_data.get("response_size", 0),
-                    response_time=req_data.get("response_time", 0.0)
-                )
-
-    # Update session overall totals and end time
-    overall_score = round(max(total_risk_scores), 2) if total_risk_scores else 0.0
-    complete_scan_session(
-        session_id=session_obj.id,
-        overall_risk_score=overall_score,
-        overall_severity=RiskScorer.classify_severity(overall_score),
-        total_vulnerabilities=vulnerability_count
-    )
-
-    return redirect(url_for("dashboard.results", session_id=session_obj.id))
+    session_id = run_pipeline(target_url, return_session_id=True)
+    if not isinstance(session_id, int):
+        return "Scan failed", 500
+    return redirect(url_for("dashboard.results", session_id=session_id))
 
 @dashboard_bp.route("/results/<int:session_id>")
 def results(session_id):
@@ -409,149 +239,22 @@ def api_trigger_scan():
     if not target_url:
         return jsonify({"status": "error", "message": "target_url is required"}), 400
 
-    # Active Scan Engine Pipeline Execution
-    discoverer = EndpointDiscovery(base_url=target_url)
-    discovered_endpoints = discoverer.discover()
-    if not discovered_endpoints:
-        discovered_endpoints = [{"url": target_url, "method": "GET"}]
+    session_id = run_pipeline(target_url, return_session_id=True)
+    if not isinstance(session_id, int):
+        return jsonify({"status": "error", "message": "scan failed"}), 500
 
-    request_engine = RequestEngine()
-    response_parser = ResponseParser()
-    signature_detector = SignatureDetector()
-    ml_detector = MLAnomalyDetector()
-    dl_detector = DeepLearningDetector()
-    risk_scorer = RiskScorer()
-
-    session_obj = save_scan_session(target_url=target_url, total_endpoints=len(discovered_endpoints))
-
-    total_risk_scores = []
-    vulnerability_count = 0
-
-    active_test_queue = [
-        {"type": "SQL_Injection", "payload": "{\"username\": \"admin' OR 1=1 --\", \"password\": \"pass\"}", "method": "POST", "headers": {"Content-Type": "application/json"}},
-        {"type": "SQL_Injection_GET", "payload": "' OR 1=1 --", "method": "GET"},
-        {"type": "Cross_Site_Scripting", "payload": "<script>alert('xss')</script>", "method": "POST"},
-        {"type": "Command_Injection", "payload": "; cat /etc/passwd", "method": "GET"},
-        {"type": "Broken_Authentication", "payload": "", "method": "GET", "headers": {"Authorization": "Bearer null"}},
-        {"type": "BOLA_IDOR", "payload": "id=1", "method": "GET", "path_suffix": "/users/v1/1"},
-        {"type": "BOLA_IDOR", "payload": "id=2", "method": "GET", "path_suffix": "/users/v1/2"},
-        {"type": "BOLA_IDOR", "payload": "id=3", "method": "GET", "path_suffix": "/users/v1/3"},
-        {"type": "BOLA_IDOR", "payload": "id=999", "method": "GET", "path_suffix": "/users/v1/999"},
-        {"type": "Baseline_Inspection", "payload": "", "method": "GET"}
-    ]
-
-    for ep_info in discovered_endpoints:
-        base_ep_url = ep_info["url"]
-        default_method = ep_info["method"]
-        ep_obj = save_endpoint(session_id=session_obj.id, url=base_ep_url, method=default_method)
-
-        baseline_req = request_engine.send_request(default_method, base_ep_url)
-        baseline_size = baseline_req.get("response_size", 0)
-        baseline_status = baseline_req.get("status_code", 200)
-        baseline_time = baseline_req.get("response_time", 0.0)
-        baseline_telemetry = {
-            "status_code": baseline_status,
-            "response_size": baseline_size,
-            "response_time": baseline_time
-        }
-
-        for test_item in active_test_queue:
-            path_suffix = test_item.get("path_suffix", "")
-            if path_suffix:
-                if base_ep_url.rstrip("/").endswith(path_suffix.strip("/")):
-                    test_url = base_ep_url
-                else:
-                    test_url = base_ep_url.rstrip("/") + path_suffix
-            else:
-                test_url = base_ep_url
-
-            test_method = test_item.get("method", default_method)
-            payload_str = test_item.get("payload", "")
-            custom_headers = test_item.get("headers", None)
-
-            req_data = request_engine.send_request(test_method, test_url, payload=payload_str, custom_headers=custom_headers)
-
-            current_size = req_data.get("response_size", 0)
-            current_status = req_data.get("status_code", 200)
-            response_body = req_data.get("response_body", "")
-
-            error_indicators = [
-                "error", "sql", "syntax", "warning",
-                "exception", "invalid", "undefined",
-                "mysql", "ora-", "pg::", "sqlite", "traceback"
-            ]
-            has_error = any(ind in response_body.lower() for ind in error_indicators)
-
-            if (current_size == baseline_size 
-                and current_status == baseline_status
-                and current_size > 0
-                and not has_error
-                and test_item["type"] not in ["Baseline_Inspection"]):
-                req_data["payload_had_effect"] = False
-            else:
-                req_data["payload_had_effect"] = True
-
-            if test_item["type"] == "Baseline_Inspection":
-                req_data["payload_had_effect"] = True
-
-            features = response_parser.extract_features(req_data)
-
-            sig_res = signature_detector.analyze(req_data, baseline_telemetry=baseline_telemetry)
-            ml_res = ml_detector.predict(features)
-            dl_res = dl_detector.analyze(payload_str, features)
-
-            risk_summary = risk_scorer.calculate_risk(
-                signature_result=sig_res,
-                ml_result=ml_res,
-                dl_result=dl_res,
-                endpoint_url=test_url,
-                http_method=test_method,
-                payload_had_effect=req_data.get("payload_had_effect", True),
-                telemetry_data=req_data
-            )
-
-            score = risk_summary["total_score"]
-            severity = risk_summary["severity"]
-            total_risk_scores.append(score)
-
-            attack_name = test_item["type"] if sig_res.get("is_vulnerable") or score > 0.0 else sig_res.get("attack_type", "None")
-            if sig_res.get("is_vulnerable") or score > 0.0:
-                vulnerability_count += 1
-
-            if score > 0 or sig_res.get("is_vulnerable") or sig_res.get("matched"):
-                save_finding(
-                    session_id=session_obj.id,
-                    endpoint_id=ep_obj.id,
-                    attack_type=attack_name,
-                    severity=severity,
-                    risk_score=score,
-                    finding_status=risk_summary.get("finding_status", "Informational"),
-                    signature_triggered=sig_res.get("proof_of_concept") or sig_res.get("pattern_matched", ""),
-                    ml_score=ml_res.get("points", 0.0),
-                    lstm_score=dl_res.get("lstm_points", 0.0),
-                    autoencoder_score=dl_res.get("autoencoder_points", 0.0),
-                    recommendation=risk_summary.get("recommendation", ""),
-                    request_payload=payload_str,
-                    response_status=req_data.get("status_code", 200),
-                    response_size=req_data.get("response_size", 0),
-                    response_time=req_data.get("response_time", 0.0)
-                )
-
-    overall_score = round(max(total_risk_scores), 2) if total_risk_scores else 0.0
-    complete_scan_session(
-        session_id=session_obj.id,
-        overall_risk_score=overall_score,
-        overall_severity=RiskScorer.classify_severity(overall_score),
-        total_vulnerabilities=vulnerability_count
-    )
-
-    return jsonify({
-        "status": "success",
-        "session_id": session_obj.id,
-        "target_url": target_url,
-        "overall_risk_score": overall_score,
-        "overall_severity": RiskScorer.classify_severity(overall_score),
-        "total_vulnerabilities": vulnerability_count,
-        "results_url": f"/results/{session_obj.id}"
-    }), 200
-
+    db = SessionLocal()
+    try:
+        session_obj = db.query(ScanSession).filter(ScanSession.id == session_id).first()
+        return jsonify({
+            "status": "success",
+            "session_id": session_id,
+            "target_url": target_url,
+            "overall_risk_score": session_obj.overall_risk_score if session_obj else None,
+            "overall_severity": session_obj.overall_severity if session_obj else None,
+            "total_vulnerabilities": session_obj.total_vulnerabilities_found if session_obj else None,
+            "results_url": url_for("dashboard.results", session_id=session_id),
+            "sarif_url": url_for("dashboard.export_report", session_id=session_id, format="sarif"),
+        }), 200
+    finally:
+        db.close()

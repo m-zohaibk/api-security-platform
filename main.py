@@ -136,7 +136,7 @@ def _resolve_test_method(ep_info: Dict[str, Any], test_item: Dict[str, Any], def
     return test_item.get("method", default_method).upper()
 
 
-def run_pipeline(target_url: str, sarif_output: str = None):
+def run_pipeline(target_url: str, sarif_output: str = None, return_session_id: bool = False):
     print("\n" + "="*65)
     print("      API SECURITY & ANOMALY DETECTION PLATFORM")
     print("="*65)
@@ -411,7 +411,7 @@ def run_pipeline(target_url: str, sarif_output: str = None):
         print(" All inspection records persisted to database.")
         print(" Launch web dashboard via `python main.py --dashboard` to view reports.")
         print("="*65 + "\n")
-        return vulnerability_count
+        return session_obj.id if return_session_id else vulnerability_count
 
     except Exception as exc:
         logger.error(f"Error during scan pipeline execution: {exc}")

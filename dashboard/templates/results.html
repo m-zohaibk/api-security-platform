@@ -6,6 +6,7 @@
 <div class="page-header">
     <h1>Inspection Results — Session #{{ session_data.id }}</h1>
     <p>Target: <strong>{{ session_data.target_url }}</strong></p>
+    <p><span class="badge badge-lg low">Complete proof-gated pipeline</span> Confirmed findings are counted separately from suspected and informational signals.</p>
 </div>
 
 <div class="summary-cards-grid">
@@ -45,6 +46,7 @@
             <a href="{{ url_for('dashboard.export_report', session_id=session_data.id, format='pdf') }}" class="btn btn-secondary">Export PDF</a>
             <a href="{{ url_for('dashboard.export_report', session_id=session_data.id, format='json') }}" class="btn btn-secondary">Export JSON</a>
             <a href="{{ url_for('dashboard.export_report', session_id=session_data.id, format='html') }}" class="btn btn-secondary">Export HTML</a>
+            <a href="{{ url_for('dashboard.export_report', session_id=session_data.id, format='sarif') }}" class="btn btn-secondary">Export SARIF</a>
         </div>
     </div>
 
