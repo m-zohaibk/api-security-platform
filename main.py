@@ -50,7 +50,11 @@ def _bind_payload_to_endpoint(ep_info: Dict[str, Any], method: str, payload: str
     query_fields = [field for field in (ep_info.get("query_fields") or []) if field]
     defaults = dict(ep_info.get("form_defaults") or {})
     if fields and method.upper() in ["GET", "DELETE"]:
-        values = {field: defaults.get(field, "") for field in fields}
+        values = {key: value for key, value in defaults.items()}
+        for field in fields:
+            values.setdefault(field, "")
+        # Submit/button fields carry their defaults so the application
+        # actually processes the form (e.g. DVWA requires Submit to run).
         values[fields[0]] = payload
         return values, None
     if fields and method.upper() in ["POST", "PUT", "PATCH"]:

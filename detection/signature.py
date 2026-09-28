@@ -75,7 +75,10 @@ class SignatureDetector:
         r"(?i)SyntaxError.*SQL",
         r"(?i)you have an error in your sql syntax",
         r"(?i)check the manual that corresponds to your (mariadb|mysql) server version",
-        r"(?i)mysqli?_",
+        # mysqli_ matches documentation text (e.g. mysql_native_password in
+        # setup guides/phpinfo), so only match it with error context.
+        r"(?i)mysqli?_sql_exception",
+        r"(?i)(warning|fatal error).{0,80}mysqli?_",
         r"(?i)supplied argument is not a valid mysql",
         r"(?i)mysql_fetch_array\(\)",
         r"(?i)SQLite3::SQLException",
