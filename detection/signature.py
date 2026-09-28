@@ -73,9 +73,8 @@ class SignatureDetector:
     SQL_ERROR_PATTERNS = [
         r"(?i)SQLAlchemyError",
         r"(?i)SyntaxError.*SQL",
-        r"(?i)MySQL server version",
         r"(?i)you have an error in your sql syntax",
-        r"(?i)mariadb",
+        r"(?i)check the manual that corresponds to your (mariadb|mysql) server version",
         r"(?i)mysqli?_",
         r"(?i)supplied argument is not a valid mysql",
         r"(?i)mysql_fetch_array\(\)",
