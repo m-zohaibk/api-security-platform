@@ -25,7 +25,10 @@ class SignatureDetector:
             r"(?i)(?:'|\")\s*(?:OR|AND)\s*(?:'|\")?\s*\d+\s*(?:'|\")?\s*=\s*(?:'|\")?\s*\d+",
             r"(?i)--\s*$",
             r"(?i)\bSLEEP\s*\(\s*\d+\s*\)",
-            r"(?i)\bBENCHMARK\s*\("
+            r"(?i)\bBENCHMARK\s*\(",
+            # Bare quote probe used for error-based SQLi detection. Anchored so it
+            # only matches when the payload itself is a lone quote, never a URL.
+            r"^['\"]$"
         ],
         "XSS": [
             r"(?i)<script[^>]*>.*?</script>",
@@ -71,6 +74,11 @@ class SignatureDetector:
         r"(?i)SQLAlchemyError",
         r"(?i)SyntaxError.*SQL",
         r"(?i)MySQL server version",
+        r"(?i)you have an error in your sql syntax",
+        r"(?i)mariadb",
+        r"(?i)mysqli?_",
+        r"(?i)supplied argument is not a valid mysql",
+        r"(?i)mysql_fetch_array\(\)",
         r"(?i)SQLite3::SQLException",
         r"(?i)ORA-\d{5}",
         r"(?i)PostgreSQL.*ERROR",

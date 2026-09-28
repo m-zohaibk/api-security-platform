@@ -101,6 +101,8 @@ def _select_test_queue(ep_info: Dict[str, Any], active_test_queue: List[Dict[str
         selected = [by_type["SQL_Injection"], by_type["SQL_Injection_GET"]]
         if "SQL_Injection_Time" in by_type:
             selected.append(by_type["SQL_Injection_Time"])
+        if "SQL_Injection_Error" in by_type:
+            selected.append(by_type["SQL_Injection_Error"])
     elif "xss_r" in path or "xss_d" in path:
         selected = [by_type["Cross_Site_Scripting"]]
     elif "xss_s" in path:
@@ -119,6 +121,8 @@ def _select_test_queue(ep_info: Dict[str, Any], active_test_queue: List[Dict[str
         selected = [by_type["Broken_Authentication"]]
     else:
         selected = [by_type["SQL_Injection_GET"], by_type["Cross_Site_Scripting"], by_type["Command_Injection"]]
+        if "SQL_Injection_Error" in by_type:
+            selected.append(by_type["SQL_Injection_Error"])
 
     if "Baseline_Inspection" not in {item["type"] for item in selected}:
         selected.append(by_type["Baseline_Inspection"])
@@ -187,6 +191,7 @@ def run_pipeline(target_url: str, sarif_output: str = None, return_session_id: b
             {"type": "SQL_Injection", "payload": "{\"username\": \"admin' OR 1=1 --\", \"password\": \"pass\"}", "method": "POST", "headers": {"Content-Type": "application/json"}},
             {"type": "SQL_Injection_GET", "payload": "' OR 1=1 --", "method": "GET"},
             {"type": "SQL_Injection_Time", "payload": "1' AND SLEEP(5)--", "method": "GET"},
+            {"type": "SQL_Injection_Error", "payload": "'", "method": "GET"},
             {"type": "Cross_Site_Scripting", "payload": "<script>alert('xss')</script>", "method": "POST"},
             {"type": "Command_Injection", "payload": "; cat /etc/passwd", "method": "GET"},
             {"type": "Local_File_Inclusion", "payload": "../../../../../../etc/passwd", "method": "GET"},
@@ -225,10 +230,10 @@ def run_pipeline(target_url: str, sarif_output: str = None, return_session_id: b
                     session_id=session_obj.id,
                     endpoint_id=csrf_ep.id,
                     attack_type="CSRF",
-                    severity="Low",
-                    risk_score=0.0,
+                    severity="LOW",
+                    risk_score=5.0,
                     finding_status="Informational",
-                    signature_triggered="POST form has no detected anti-CSRF token; exploitability not verified",
+                    signature_triggered="State-changing form has no detected anti-CSRF token; exploitability not verified",
                     recommendation="Verify Origin/Referer validation and use a framework CSRF token for state-changing forms.",
                     request_payload="",
                     response_status=baseline_req.get("status_code", 200),

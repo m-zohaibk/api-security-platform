@@ -28,6 +28,20 @@ class RiskScorer:
         "Critical": "Critical attack pattern detected across multiple engine layers. Immediately enforce WAF filtering and remediate underlying endpoint code."
     }
 
+    # Attack classes where a verified response indicator (has_proof) is decisive
+    # on its own. The hybrid confidence multiplier is designed for anomaly
+    # triage; it must not downgrade hard exploit evidence to LOW.
+    PROOF_HIGH_FLOOR_ATTACKS = frozenset({
+        "SQL_Injection",
+        "Command_Injection",
+        "Local_File_Inclusion",
+        "XXE",
+        "XSS",
+        "BOLA_IDOR",
+        "Auth_Weakness",
+        "Sensitive_Data_Exposure",
+    })
+
     @staticmethod
     def classify_severity(score: float) -> str:
         if score >= 70.0:
@@ -174,6 +188,14 @@ class RiskScorer:
         # Calculate combined total score with confidence weighting
         raw_total = sig_points + ml_points + lstm_points + ae_points + supervised_points
         final_risk_score = round(min(self.MAX_TOTAL_POINTS, raw_total * confidence), 2)
+
+        # Hard exploit evidence is decisive on its own: a verified signature
+        # proof (command output, file content, SQL error, unescaped reflection,
+        # ...) must never be reported as LOW just because the ML/DL layers did
+        # not also fire. Floor such findings at HIGH.
+        if has_proof and (signature_result.get("attack_type") or "") in self.PROOF_HIGH_FLOOR_ATTACKS:
+            final_risk_score = max(final_risk_score, 40.0)
+
         severity = self.classify_severity(final_risk_score)
 
         # A high anomaly score is useful for triage, but it is not exploit

@@ -75,6 +75,15 @@ def save_scan_session(
 def save_endpoint(session_id: int, url: str, method: str = "GET") -> Endpoint:
     db = SessionLocal()
     try:
+        # Endpoints are recorded once per probe dispatch; reuse the existing row
+        # so the endpoint list (and the dashboard) does not fill with duplicates.
+        existing = db.query(Endpoint).filter(
+            Endpoint.session_id == session_id,
+            Endpoint.url == url,
+            Endpoint.method == method.upper()
+        ).first()
+        if existing:
+            return existing
         endpoint_obj = Endpoint(
             session_id=session_id,
             url=url,
